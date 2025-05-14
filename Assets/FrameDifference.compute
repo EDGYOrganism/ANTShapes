@@ -1,0 +1,38 @@
+#pragma kernel CSMain
+
+RWTexture2D<float4> Result;
+Texture2D<float4> CurrentFrame;
+Texture2D<float4> PrevFrame;
+
+float SpikeThreshold;
+float Frame;
+
+float Greyscale(float3 color)
+{
+    return dot(color, float3(0.299, 0.587, 0.114));
+}
+
+[numthreads(16, 16, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    int2 uv = id.xy;
+    
+    float3 currColor = CurrentFrame[uv].rgb;
+    float3 prevColor = PrevFrame[uv].rgb;
+
+    float currGray = Greyscale(currColor);
+    float prevGray = Greyscale(prevColor);
+
+    float diff = currGray - prevGray;
+
+    float outputValue;
+    
+    if (Frame > 0)
+    	outputValue = (diff > SpikeThreshold) ? 1 : ((diff < -SpikeThreshold) ? -1 : 0);
+    else
+        outputValue = 0;
+
+    outputValue = (outputValue + 1) * 0.5;
+
+    Result[uv] = float4(outputValue, outputValue, outputValue, 1);
+}

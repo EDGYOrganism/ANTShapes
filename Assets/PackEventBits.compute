@@ -1,0 +1,66 @@
+#pragma kernel CSMain
+
+Texture2D<float4> FrameDiff;
+Texture2D<float4> AnomalyMask;
+RWStructuredBuffer<uint> OutputBufferEvents;
+RWStructuredBuffer<uint> OutputIndexEvents;
+RWStructuredBuffer<uint> OutputBufferAnomaly;
+RWStructuredBuffer<uint> OutputIndexAnomaly;
+
+cbuffer Constants : register(b0)
+{
+	uint Timestamp;
+};
+
+[numthreads(16, 16, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    uint width, height;
+    FrameDiff.GetDimensions(width, height);
+    if (id.x >= width || id.y >= height) return;
+
+    float4 color = FrameDiff.Load(int3(id.xy, 0));
+    float4 anomaly = AnomalyMask.Load(int3(id.xy, 0));
+
+    // Only care about black or white pixels
+    if (all(color.rgb == float3(0, 0, 0)) || all(color.rgb == float3(1, 1, 1)))
+    {
+        // Determine if pixel is white or black (bit 23)
+        uint polarity = all(color.rgb == float3(1, 1, 1)) ? 1u : 0u;
+
+        uint x = id.x; // X position
+        uint y = id.y; // Y position
+
+        // Atomically reserve 2 uint slots (8 bytes)
+        uint indexEvents, indexAnomaly;
+        InterlockedAdd(OutputIndexEvents[0], 2, indexEvents);
+
+        // Pack event bits
+        uint lowEvents = (Timestamp & 0x7FFFFF);
+        lowEvents |= polarity << 23;
+        lowEvents |= (y & 0xFF) << 24;
+        uint highEvents = ((y & 0xFF00) >> 8) | ((x & 0xFFFF) << 8);
+        
+        // Store the packed values into the buffer
+        OutputBufferEvents[indexEvents] = lowEvents;
+        OutputBufferEvents[indexEvents + 1] = highEvents;
+        
+        // If pixel exists in anomaly mask
+        if (anomaly.a > 0)
+        {
+        	// Atomically reserve 2 uint slots (8 bytes)
+        	InterlockedAdd(OutputIndexAnomaly[0], 2, indexAnomaly);
+        
+		// Pack anomaly bits
+		uint lowAnomaly = (Timestamp & 0x7FFFFF);
+		lowAnomaly |= 1;
+		lowAnomaly |= (y & 0xFF00) << 16;
+		uint highAnomaly = (y & 0xFF) | ((x & 0xFFFF) << 8);
+		
+		// Store the packed values into the buffer
+		OutputBufferAnomaly[indexAnomaly] = lowAnomaly;
+		OutputBufferAnomaly[indexAnomaly + 1] = highAnomaly;
+	}
+    }
+}
+

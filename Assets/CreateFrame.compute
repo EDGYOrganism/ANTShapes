@@ -1,0 +1,60 @@
+#pragma kernel CSMain
+
+// Textures
+bool AntiAlias;
+float SceneDepth;
+float zCameraDissolve;
+Texture2D<float4> SkyboxTexture;
+Texture2D<float4> RawViewTexture;
+Texture2D<float4> RawViewAATexture;
+Texture2D<float4> DepthTexture;
+Texture2D<float4> FogDepthTexture;
+RWTexture2D<float4> Result;
+
+// Thread group size
+[numthreads(16, 16, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    float4 bg = SkyboxTexture[id.xy];
+    float4 fg = RawViewTexture[id.xy];
+    float4 fgAA = RawViewAATexture[id.xy];
+    float4 fgToUse;
+    
+    // Sample the color and alpha from the depth textures
+    float4 depthSample = DepthTexture[id.xy];
+    float4 fogDepthSample = FogDepthTexture[id.xy];
+    
+    // Determine the depth values:
+    float depthValue = depthSample.r;
+    float fogDepthValue = (fogDepthSample.a < 1.0) ? (1.0 - fogDepthSample.a) : fogDepthSample.r;
+
+    // Invert the fog depth value for the alpha blend
+    float alpha = 1.0 - fogDepthValue;
+
+    // Handle anti aliasing
+    float3 compare;
+    if (AntiAlias && depthValue * SceneDepth > zCameraDissolve / 2) {
+    	fgToUse = fgAA;
+    	
+    	float levels = 2;
+        float step = 1.0 / (levels - 1);
+        compare = floor(fg.rgb / step + 0.5) * step;
+    }
+    else {
+        fgToUse = fg;
+        compare = fg.rgb;
+    }
+    
+    // Handle clipping
+    if (compare.g == 1 && compare.b == 1 && depthValue * SceneDepth < zCameraDissolve / 2) {
+	alpha = 0.0;
+    }
+
+    // Blend the foreground and background
+    float3 blendedRGB = lerp(bg.rgb, fgToUse.rgb, alpha);
+
+    // Write the result with an opaque alpha
+    Result[id.xy] = float4(blendedRGB, 1.0);
+}
+
+

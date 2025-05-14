@@ -1,0 +1,45 @@
+#pragma kernel CSMain
+
+// Input textures (current frame, previous frame, and frame difference)
+Texture2D<float4> CurrentFrame : register(t0);
+Texture2D<float4> PrevFrame : register(t1);
+RWTexture2D<float4> Result : register(u0);
+float Frame;
+
+// Texture size, set by Unity when dispatching the shader
+[numthreads(16, 16, 1)] // Number of threads per group (you can adjust as needed)
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float4 color = 0.0;
+
+    if (Frame > 0)
+    {
+	// Get the current pixel's UV coordinates
+	uint width, height;
+	Result.GetDimensions(width, height);  // Get the dimensions of the result texture
+
+	float2 uv = float2(id.x, id.y) / float2(width, height);
+
+	// Sample the current and previous frames
+	float4 currentColor = CurrentFrame.Load(int3(id.xy, 0));
+	float4 prevColor = PrevFrame.Load(int3(id.xy, 0));
+
+	// Accumulate the pixel values from both frames
+	color = currentColor + prevColor;
+
+	// If the accumulated color is close to black, set alpha to 0
+	if (length(color.rgb) < 0.01)
+	{
+	    color.a = 0.0; // Make the pixel fully transparent if close to black
+	}
+	else
+	{
+	    color.a = 0.5; // Set alpha to 50% for non-black pixels
+	}
+    }
+    else
+    	color.a = 0.0;
+
+    // Write the accumulated color to the result texture
+    Result[id.xy] = color;
+}
