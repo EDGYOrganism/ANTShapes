@@ -7,61 +7,14 @@ using UnityEngine.Rendering.RendererUtils;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using MIConvexHull;
 using TMPro;
 using SFB;
 
 public class SceneController : MonoBehaviour
 {
-    // Mapping from shape params to UI information
-    private static readonly Dictionary<ShapeParamsNorm, UIParamInfo> shapeParamUIMap = new Dictionary<ShapeParamsNorm, UIParamInfo>
-    {
-        { ShapeParamsNorm.X_ROTATION_MEAN, new UIParamInfo("UI_XRotation", "Sld_Mean", "Inp_Mean", -4, 4) },
-        { ShapeParamsNorm.Y_ROTATION_MEAN, new UIParamInfo("UI_YRotation", "Sld_Mean", "Inp_Mean", -4, 4) },
-        { ShapeParamsNorm.Z_ROTATION_MEAN, new UIParamInfo("UI_ZRotation", "Sld_Mean", "Inp_Mean", -4, 4) },
-
-        { ShapeParamsNorm.X_ROTATION_STD, new UIParamInfo("UI_XRotation", "Sld_Std", "Inp_Std", 0, 4) },
-        { ShapeParamsNorm.Y_ROTATION_STD, new UIParamInfo("UI_YRotation", "Sld_Std", "Inp_Std", 0, 4) },
-        { ShapeParamsNorm.Z_ROTATION_STD, new UIParamInfo("UI_ZRotation", "Sld_Std", "Inp_Std", 0, 4) },
-
-        { ShapeParamsNorm.X_INIT_ROTATION_MEAN, new UIParamInfo("UI_XInitRotation", "Sld_Mean", "Inp_Mean", 0, 360) },
-        { ShapeParamsNorm.Y_INIT_ROTATION_MEAN, new UIParamInfo("UI_YInitRotation", "Sld_Mean", "Inp_Mean", 0, 360) },
-        { ShapeParamsNorm.Z_INIT_ROTATION_MEAN, new UIParamInfo("UI_ZInitRotation", "Sld_Mean", "Inp_Mean", 0, 360) },
-
-        { ShapeParamsNorm.X_INIT_ROTATION_STD, new UIParamInfo("UI_XInitRotation", "Sld_Std", "Inp_Std", 0, 10) },
-        { ShapeParamsNorm.Y_INIT_ROTATION_STD, new UIParamInfo("UI_YInitRotation", "Sld_Std", "Inp_Std", 0, 10) },
-        { ShapeParamsNorm.Z_INIT_ROTATION_STD, new UIParamInfo("UI_ZInitRotation", "Sld_Std", "Inp_Std", 0, 10) },
-
-        { ShapeParamsNorm.X_TRANSLATION_MEAN, new UIParamInfo("UI_XTranslation", "Sld_Mean", "Inp_Mean", -2, 2) },
-        { ShapeParamsNorm.Y_TRANSLATION_MEAN, new UIParamInfo("UI_YTranslation", "Sld_Mean", "Inp_Mean", -2, 2) },
-        { ShapeParamsNorm.Z_TRANSLATION_MEAN, new UIParamInfo("UI_ZTranslation", "Sld_Mean", "Inp_Mean", -2, 2) },
-
-        { ShapeParamsNorm.X_TRANSLATION_STD, new UIParamInfo("UI_XTranslation", "Sld_Std", "Inp_Std", 0, 2) },
-        { ShapeParamsNorm.Y_TRANSLATION_STD, new UIParamInfo("UI_YTranslation", "Sld_Std", "Inp_Std", 0, 2) },
-        { ShapeParamsNorm.Z_TRANSLATION_STD, new UIParamInfo("UI_ZTranslation", "Sld_Std", "Inp_Std", 0, 2) },
-
-        { ShapeParamsNorm.X_INIT_POSITION_MEAN, new UIParamInfo("UI_XInitPosition", "Sld_Mean", "Inp_Mean", 0, 1) },
-        { ShapeParamsNorm.Y_INIT_POSITION_MEAN, new UIParamInfo("UI_YInitPosition", "Sld_Mean", "Inp_Mean", 0, 1) },
-        { ShapeParamsNorm.Z_INIT_POSITION_MEAN, new UIParamInfo("UI_ZInitPosition", "Sld_Mean", "Inp_Mean", 0, 1) },
-
-        { ShapeParamsNorm.X_INIT_POSITION_STD, new UIParamInfo("UI_XInitPosition", "Sld_Std", "Inp_Std", 0, 0.5f) },
-        { ShapeParamsNorm.Y_INIT_POSITION_STD, new UIParamInfo("UI_YInitPosition", "Sld_Std", "Inp_Std", 0, 0.5f) },
-        { ShapeParamsNorm.Z_INIT_POSITION_STD, new UIParamInfo("UI_ZInitPosition", "Sld_Std", "Inp_Std", 0, 0.5f) },
-
-        { ShapeParamsNorm.X_SCALE_MEAN, new UIParamInfo("UI_XScale", "Sld_Mean", "Inp_Mean", 0.25f, 10) },
-        { ShapeParamsNorm.Y_SCALE_MEAN, new UIParamInfo("UI_YScale", "Sld_Mean", "Inp_Mean", 0.25f, 10) },
-        { ShapeParamsNorm.Z_SCALE_MEAN, new UIParamInfo("UI_ZScale", "Sld_Mean", "Inp_Mean", 0.25f, 10) },
-
-        { ShapeParamsNorm.X_SCALE_STD, new UIParamInfo("UI_XScale", "Sld_Std", "Inp_Std", 0, 5) },
-        { ShapeParamsNorm.Y_SCALE_STD, new UIParamInfo("UI_YScale", "Sld_Std", "Inp_Std", 0, 5) },
-        { ShapeParamsNorm.Z_SCALE_STD, new UIParamInfo("UI_ZScale", "Sld_Std", "Inp_Std", 0, 5) },
-
-        { ShapeParamsNorm.SURFACE_NOISE_MEAN, new UIParamInfo("UI_SurfaceNoise", "Sld_Mean", "Inp_Mean", 0, 1) },
-        { ShapeParamsNorm.SURFACE_NOISE_STD, new UIParamInfo("UI_SurfaceNoise", "Sld_Std", "Inp_Std", 0, 1) }
-    };
-
     [HideInInspector] public TextureMode activeViewMode = TextureMode.Real;
+    private Vector2 lastMousePosition;
 
     [Header("Model Shaders")]
     public Shader shd_Scene;
@@ -117,7 +70,18 @@ public class SceneController : MonoBehaviour
     [HideInInspector] public float[] shapeWeights;
 
     [Header("Object Parameters")]
-    public ShapeParamData[] shapeParamData;
+    public Canvas uiCanvas;
+    public GameObject uiObjectParamMenu;
+    public RectTransform lhPanelRect;
+    public RectTransform rhPanelRect;
+    private GameObject[] editParamMenus;
+    [HideInInspector] public ShapeParamData[] shapeParamData, shapeParamDataBuffer;
+    [HideInInspector] public ShapeParamData shapeParamDataClipboard;
+    [HideInInspector] public bool dataInClipboard;
+    [HideInInspector] public RectTransform selectedMenuRect;
+    [HideInInspector] public int numMenusOpen = 0;
+    [HideInInspector] public int menuSortCount = 0;
+    [HideInInspector] public Rect uiScreenBoundary;
 
     [Header("Simulation Settings")]
     public TMP_InputField durationInput;
@@ -157,7 +121,7 @@ public class SceneController : MonoBehaviour
     public float zCloseSpawnBuffer = 5;  // Set in inspector
     public float zFarSpawnBuffer = 25;  // Set in inspector
     public float minSceneDepth = 25;  // Set in inspector
-    public float maxSceneDepth = 500;  // Set in inspector
+    public float maxSceneDepth = 100;  // Set in inspector
     public float cameraClipDistance = -0.5f;  // Set in inspector
     public float cameraCloseDissolveDistance = 3;  // Set in inspector
     [HideInInspector] public float sceneDepth;
@@ -165,11 +129,13 @@ public class SceneController : MonoBehaviour
     private float bgNoiseAmt;
     [HideInInspector] public float zCameraClip, zCameraDissolve, zCloseBoundary, zFarBoundary, zSpawnBoundary;
 
-    [Header("Object UI Groups")]
-    public List<GameObject> uiGroups;
-
-    [Header("Edit Object Parameter Buttons")]
-    public List<Button> editObjectParamButtons;
+    [Header("Default Buttons")]
+    public Button timeDefButton;
+    public Button cameraDefButton;
+    public Button renderingDefButton;
+    public Button depthDefButton;
+    public Button reboundDefButton;
+    public Button anomaliesDefButton;
 
     [Header("Other Buttons")]
     public Button weightsZeroButton;
@@ -178,7 +144,8 @@ public class SceneController : MonoBehaviour
     public Button spikesButton;
     public Button applyButton;
     public Button restartButton;
-    public Button quitButton;
+    public List<Button> editObjectParamButtons;
+    public Button closeAllMenusBtn;
     private bool changesMade = false;
 
     [Header("UI Readouts")]
@@ -190,9 +157,7 @@ public class SceneController : MonoBehaviour
     [Header("Anomaly Handling")]
     public TMP_InputField pThresholdInput;
     public Slider pThresholdSlider;
-    public Toggle includeInitPosRotationToggle;
     [HideInInspector] public float pThreshold;
-    [HideInInspector] public bool includeInitPosRotation;
 
     [Header("Export")]
     public Button exportButton;
@@ -216,33 +181,52 @@ public class SceneController : MonoBehaviour
     void Start()
     {
         Application.targetFrameRate = 60;
+        Input.simulateMouseWithTouches = true; // For touch devices
+
         kernelHandleCreateFrame = createFrame.FindKernel("CSMain");
         kernelHandleDiff = frameDiff.FindKernel("CSMain");
         kernelHandleAnom = anomalyMask.FindKernel("CSMain");
         kernelHandlePrepareData = packEventBits.FindKernel("CSMain");
 
+        uiScreenBoundary = new Rect(lhPanelRect.rect.width, 0, Screen.width - rhPanelRect.rect.width - lhPanelRect.rect.width - 33, Screen.height - 13);  // Yeah idk why we need these magic numbers to make things look nice but we dooooooooo
+
         reboundOnEdges = new bool[6];
 
         // Init shape parameters
-        shapeParamData = new ShapeParamData[(int)ShapeParamLabels.COUNT];
-        for (int i = 0; i < (int)ShapeParamLabels.COUNT; i++)
+        int count = (int)ShapeParamLabels.COUNT;
+        shapeParamData = new ShapeParamData[count];
+        shapeParamDataBuffer = new ShapeParamData[count];
+        for (int i = 0; i < count; i++)
         {
-            shapeParamData[i] = new ShapeParamData((ShapeParamLabels)i);
+            shapeParamData[i] = new ShapeParamData(i == (int)ShapeParamLabels.GLOBAL);
+            shapeParamDataBuffer[i] = new ShapeParamData(i == (int)ShapeParamLabels.GLOBAL);
         }
+        shapeParamDataClipboard = new ShapeParamData();
+        editParamMenus = new GameObject[count];
 
-        InitializeUIDataFields();
         InitializeUIButtons();
         InitializeUIWeightControls();
         AddChangesMadeListener();
 
+        minNumObjectsInput.text = "1";
+        maxNumObjectsInput.text = "1";
+
         sceneDepthSlider.minValue = minSceneDepth;
         sceneDepthSlider.maxValue = maxSceneDepth;
-        SliderInputBinder.Bind(pThresholdSlider, pThresholdInput);
-        SliderInputBinder.Bind(fuzzinessSlider, fuzzinessInput);
-        SliderInputBinder.Bind(sceneDepthSlider, sceneDepthInput);
-        SliderInputBinder.Bind(fogDepthSlider, fogDepthInput);
-        SliderInputBinder.Bind(bgNoiseSlider, bgNoiseInput);
-        SliderInputBinder.Bind(fovSlider, fovInput);
+        Utils.BindSliderToInputField(pThresholdSlider, pThresholdInput);
+        Utils.BindSliderToInputField(fuzzinessSlider, fuzzinessInput);
+        Utils.BindSliderToInputField(sceneDepthSlider, sceneDepthInput);
+        Utils.BindSliderToInputField(fogDepthSlider, fogDepthInput);
+        Utils.BindSliderToInputField(bgNoiseSlider, bgNoiseInput);
+        Utils.BindSliderToInputField(fovSlider, fovInput);
+
+        Utils.SetupTextInputFormatting(seedInput, "", 8, -9999999, 9999999);
+        Utils.SetupTextInputFormatting(timeScaleInput, "", 5, 0.001f, 100);
+        Utils.SetupTextInputFormatting(durationInput, "", 6, 1, 999999);
+        Utils.SetupTextInputFormatting(spikeThresholdInput, "", 6, 0, 0.5f);
+        Utils.SetupTextInputFormatting(numSimulationsInput, "", 5, 1, 99999);
+        Utils.SetupTextInputFormatting(minNumObjectsInput, "", 4, 1, maxNumObjectsHard);
+        Utils.SetupTextInputFormatting(maxNumObjectsInput, "", 4, 1, maxNumObjectsHard);
 
         CreateMeshes();
         seedInput.text = "0";
@@ -256,53 +240,23 @@ public class SceneController : MonoBehaviour
         ApplySettings();
     }
 
-    void InitializeUIDataFields()
-    {
-        for (int i = 0; i < (int)ShapeParamLabels.COUNT; i++)
-        {
-            Transform uiGroup = uiGroups[i].transform;
-            uiGroup = uiGroup.Find("Controls");
-
-            for (int j = 0; j < (int)ShapeParamsNorm.COUNT; j++)
-            {
-                ShapeParamsNorm param = (ShapeParamsNorm)j;
-                if (!shapeParamUIMap.TryGetValue(param, out UIParamInfo info)) continue;
-
-                float value = shapeParamData[i].data[j];
-
-                Transform groupTransform = uiGroup.Find(info.GroupName);
-                if (groupTransform == null) continue;
-
-                Slider slider = groupTransform.Find(info.SliderName)?.GetComponent<Slider>();
-                TMP_InputField input = groupTransform.Find(info.InputName)?.GetComponent<TMP_InputField>();
-                SliderInputBinder.Bind(slider, input);
-
-                if (slider != null)
-                {
-                    slider.minValue = info.Min;
-                    slider.maxValue = info.Max;
-                    slider.value = value;
-                }
-
-                if (input != null)
-                {
-                    input.text = value.ToString("F2");
-                }
-            }
-        }
-    }
-
     void InitializeUIButtons()
     {
         applyButton.onClick.AddListener(NewScene);
         restartButton.onClick.AddListener(ResetSimulation);
         realButton.onClick.AddListener(() => SetRenderQuadTextures(TextureMode.Real));
         spikesButton.onClick.AddListener(() => SetRenderQuadTextures(TextureMode.Spikes));
-        weightsZeroButton.onClick.AddListener(BtnZeroShapeWeightSliders);
-        weightsRandomButton.onClick.AddListener(BtnRandomShapeWeightSliders);
+        weightsZeroButton.onClick.AddListener(ZeroShapeWeightSliders);
+        weightsRandomButton.onClick.AddListener(RandomShapeWeightSliders);
         exportButton.onClick.AddListener(StartExport);
         cancelExportButton.onClick.AddListener(CancelExport);
-        quitButton.onClick.AddListener(Quit);
+
+        timeDefButton.onClick.AddListener(TimeDefaults);
+        cameraDefButton.onClick.AddListener(CameraDefaults);
+        renderingDefButton.onClick.AddListener(RenderingDefaults);
+        depthDefButton.onClick.AddListener(DepthDefaults);
+        reboundDefButton.onClick.AddListener(ReboundDefaults);
+        anomaliesDefButton.onClick.AddListener(AnomalyDefaults);
 
         editObjectParamButtons[(int)ShapeParamLabels.CUBE].onClick.AddListener(BtnEditShapeParamsCube);
         editObjectParamButtons[(int)ShapeParamLabels.SPHERE].onClick.AddListener(BtnEditShapeParamsSphere);
@@ -317,19 +271,20 @@ public class SceneController : MonoBehaviour
         editObjectParamButtons[(int)ShapeParamLabels.TEAPOT].onClick.AddListener(BtnEditShapeParamsTeapot);
         editObjectParamButtons[(int)ShapeParamLabels.SUZANNE].onClick.AddListener(BtnEditShapeParamsSuzanne);
         editObjectParamButtons[(int)ShapeParamLabels.GLOBAL].onClick.AddListener(BtnEditShapeParamsGlobal);
+        closeAllMenusBtn.onClick.AddListener(BtnCloseAllEditMenus);
     }
 
     void InitializeUIWeightControls()
     {
         for (int i = 0; i < (int)Shapes.COUNT; i++)
         {
-            SliderInputBinder.Bind(weightSliders[i], weightInputs[i]);
+            Utils.BindSliderToInputField(weightSliders[i], weightInputs[i]);
         }
         ZeroShapeWeightSliders();
         weightSliders[(int)Shapes.CUBE].value = 1;
     }
 
-    void SetChangesMadeFlag()
+    public void SetChangesMadeFlag()
     {
         changesMade = true;
     }
@@ -533,7 +488,7 @@ public class SceneController : MonoBehaviour
 
                 exportCount++;
                 exportPopupText.text = $"Exporting Dataset\n{exportCount + 1} / {numSimulations}";
-                
+
                 if (exportCount >= numSimulations)
                 {
                     FinishedExport();
@@ -557,6 +512,7 @@ public class SceneController : MonoBehaviour
 
         UpdateScene();
         UpdateUIReadouts();
+        UpdateDraggingMenu();
     }
 
     void RenderCamera(Camera camera)
@@ -573,7 +529,7 @@ public class SceneController : MonoBehaviour
                 SetAntiAliasing(true);
                 camera.targetTexture = rawViewAATexture;
                 camera.Render();
-                
+
                 // Render non-AA texture
                 SetAntiAliasing(false);
                 camera.targetTexture = rawViewTexture;
@@ -612,7 +568,7 @@ public class SceneController : MonoBehaviour
     {
         // Get all active objects
         SpawnableObj[] allSpawnableObjs = gameObject.transform.GetComponentsInChildren<SpawnableObj>();
-        
+
         foreach (var o in allSpawnableObjs)
         {
             o.meshRenderer.material.shader = shaderToUse;
@@ -664,29 +620,56 @@ public class SceneController : MonoBehaviour
 
     void DefaultSettingsLHS()
     {
-        minNumObjectsInput.text = "1";
-        maxNumObjectsInput.text = "1";
+        TimeDefaults();
+        CameraDefaults();
+        RenderingDefaults();
+        DepthDefaults();
+        ReboundDefaults();
+        AnomalyDefaults();
+        // Don't set seed, useGPU toggle or export settings here
+    }
+
+    void TimeDefaults()
+    {
         timeScaleInput.text = "1";
         durationInput.text = "100";
-        spikeThresholdInput.text = "0.0085";
+    }
+
+    void CameraDefaults()
+    {
         textureWidthInput.text = "1280";
         textureHeightInput.text = "720";
         fovSlider.value = 70f;
+    }
+
+    void RenderingDefaults()
+    {
+        spikeThresholdInput.text = "0.0085";
+        useAAToggle.isOn = true;
+        cleanClippingToggle.isOn = false;
+    }
+
+    void DepthDefaults()
+    {
         sceneDepthSlider.value = 25f;
-        fogDepthSlider.value = 0.25f;
+        fogDepthSlider.value = 0;
         bgNoiseSlider.value = 0;
-        pThresholdSlider.value = 0.01f;
-        fuzzinessSlider.value = 0.5f;
+    }
+
+    void ReboundDefaults()
+    {
         reboundNegXToggle.isOn = false;
         reboundPosXToggle.isOn = false;
         reboundNegYToggle.isOn = false;
         reboundPosYToggle.isOn = false;
-        reboundNegZToggle.isOn = false;
+        reboundNegZToggle.isOn = true;
         reboundPosZToggle.isOn = false;
-        includeInitPosRotationToggle.isOn = false;
-        useAAToggle.isOn = true;
-        cleanClippingToggle.isOn = true;
-        // Don't set useGPU toggle or export settings here
+    }
+
+    void AnomalyDefaults()
+    {
+        pThresholdSlider.value = 0.01f;
+        fuzzinessSlider.value = 0.5f;
     }
 
     void ZeroShapeWeightSliders()
@@ -697,24 +680,12 @@ public class SceneController : MonoBehaviour
         }
     }
 
-    void BtnZeroShapeWeightSliders()
-    {
-        ZeroShapeWeightSliders();
-        NewScene();
-    }
-
     void RandomShapeWeightSliders()
     {
         for (int i = 0; i < (int)Shapes.COUNT; i++)
         {
             weightSliders[i].value = (float)rng.NextDouble();
         }
-    }
-
-    void BtnRandomShapeWeightSliders()
-    {
-        RandomShapeWeightSliders();
-        NewScene();
     }
 
     void BtnEditShapeParamsCube()
@@ -782,22 +753,37 @@ public class SceneController : MonoBehaviour
         BtnEditShapeParams(ShapeParamLabels.GLOBAL);
     }
 
-    void BtnEditShapeParams(ShapeParamLabels shape)
+    void BtnEditShapeParams(ShapeParamLabels shapeID)
     {
-        GameObject uiGroup = uiGroups[(int)shape];
-        bool isCurrentlyActive = uiGroup.activeSelf;
+        GameObject uiMenu = editParamMenus[(int)shapeID];
 
-        // Disable all groups
-        foreach (GameObject o in uiGroups)
+        // Close menu if already open
+        if (uiMenu != null)
+            uiMenu.GetComponent<UI_ObjectParams>().CloseMenu();
+        // Open new menu
+        else
         {
-            o.SetActive(false);
+            uiMenu = Instantiate(uiObjectParamMenu);
+            uiMenu.transform.SetParent(uiCanvas.gameObject.transform);
+            uiMenu.GetComponent<UI_ObjectParams>().Init(this, shapeID);
+            editParamMenus[(int)shapeID] = uiMenu;
+            closeAllMenusBtn.interactable = true;
+            numMenusOpen++;
+            menuSortCount++;
+        }
+    }
+
+    void BtnCloseAllEditMenus()
+    {
+        for (int i = 0; i < (int)ShapeParamLabels.COUNT; i++)
+        {
+            if (editParamMenus[i] != null)
+                editParamMenus[i].GetComponent<UI_ObjectParams>().CloseMenu();
         }
 
-        // Toggle the matched group
-        if (!isCurrentlyActive)
-        {
-            uiGroup.SetActive(true);
-        }
+        closeAllMenusBtn.interactable = false;
+        numMenusOpen = 0;
+        menuSortCount = 0;
     }
 
     void NewScene()
@@ -815,7 +801,6 @@ public class SceneController : MonoBehaviour
         UpdateSkybox();
         HandleNumObjectsChange();
         SpawnObjects();
-        //SetAntiAliasing();
         ResetSimulation();
         AdjustRenderQuads();
         SetRenderQuadTextures(previousMode); // Restore previous texture mode
@@ -1021,7 +1006,7 @@ public class SceneController : MonoBehaviour
         skyboxCamera.fieldOfView = fov;
 
         float quadDistance = Vector3.Distance(renderQuadScene.transform.position, mainCamera.transform.position);
-        
+
         // Use main camera's FOV and aspect ratio to calculate viewport dimensions at the given distance
         float fovVertical = mainCamera.fieldOfView;
         float aspect = mainCamera.aspect;
@@ -1108,7 +1093,7 @@ public class SceneController : MonoBehaviour
             renderQuadAnomaly.SetActive(false);
         }
         else
-        { 
+        {
             texture = differenceTexture;
             renderQuadAnomaly.GetComponent<Renderer>().sharedMaterial.SetTexture("_MainTex", anomalyMaskTexture);
             renderQuadAnomaly.SetActive(true);
@@ -1257,11 +1242,23 @@ public class SceneController : MonoBehaviour
         indexEvents.Release();
     }
 
-    float GetViewportDimension(Camera cam, float distance, bool isWidth)
+    void CopyAllShapeParamData(ShapeParamData[] src, ShapeParamData[] dst)
     {
-        float fovRadians = cam.fieldOfView * Mathf.Deg2Rad;
-        float halfHeight = Mathf.Tan(fovRadians / 2) * distance;
-        return isWidth ? 2 * halfHeight * cam.aspect : 2 * halfHeight;
+        for (int i = 0; i < (int)ShapeParamLabels.COUNT; i++)
+        {
+            dst[i] = src[i].Copy();
+        }
+    }
+
+    public void CopyShapeParamDataToClipboard(ShapeParamLabels shapeID)
+    {
+        shapeParamDataClipboard = shapeParamDataBuffer[(int)shapeID].Copy();
+        dataInClipboard = true;
+    }
+
+    public void PasteShapeParamDataFromClipboard(ShapeParamLabels shapeID)
+    {
+        shapeParamDataBuffer[(int)shapeID] = shapeParamDataClipboard.Copy();
     }
 
     void ReadValues()
@@ -1280,15 +1277,13 @@ public class SceneController : MonoBehaviour
         useGPU = useGPUToggle.isOn;
         useAA = useAAToggle.isOn;
         cleanClipping = cleanClippingToggle.isOn;
-        
+
         reboundOnEdges[0] = reboundNegXToggle.isOn;
         reboundOnEdges[1] = reboundPosXToggle.isOn;
         reboundOnEdges[2] = reboundNegYToggle.isOn;
         reboundOnEdges[3] = reboundPosYToggle.isOn;
         reboundOnEdges[4] = reboundNegZToggle.isOn;
         reboundOnEdges[5] = reboundPosZToggle.isOn;
-        
-        includeInitPosRotation = includeInitPosRotationToggle.isOn;
 
         // Read input fields
         int.TryParse(seedInput.text, out seed);
@@ -1306,43 +1301,39 @@ public class SceneController : MonoBehaviour
         int.TryParse(textureHeightInput.text, out textureHeight);
         pixelCount = textureWidth * textureHeight;
 
-        // Copy from parameter sliders
-        for (int i = 0; i < (int)ShapeParamLabels.COUNT; i++)
-        {
-            for (int j = 0; j < (int)ShapeParamsNorm.COUNT; j++)
-            {
-                shapeParamData[i].data[j] = GetSliderForParam((ShapeParamLabels)i, (ShapeParamsNorm)j).value;
-            }
-        }
-
         // Update Z plane distances
         zCameraClip = renderCamera.transform.position.z + cameraClipDistance;
         zCameraDissolve = renderCamera.transform.position.z + cameraCloseDissolveDistance;
-        zCloseBoundary = zCameraClip + zCloseSpawnBuffer;
-        zFarBoundary = zCloseSpawnBuffer + sceneDepth;
+        zCloseBoundary = renderCamera.transform.position.z + zCloseSpawnBuffer;
+        zFarBoundary = zCloseBoundary + sceneDepth;
         zSpawnBoundary = zFarBoundary + zFarSpawnBuffer;
 
         // Update fog start distance
         fogDepth = (fogDepthNorm * sceneDepth) + zFarSpawnBuffer;
         fogStart = zSpawnBoundary - fogDepth;
+
+        // Copy shape parameter values
+        CopyAllShapeParamData(shapeParamDataBuffer, shapeParamData);
     }
 
     public float ReadShapeParam(ShapeParamLabels shape, ShapeParamsNorm param)
     {
-        return shapeParamData[(int)shape].data[(int)param];
+        return shapeParamData[(int)shape].GetValue(param);
     }
 
-    private Slider GetSliderForParam(ShapeParamLabels shape, ShapeParamsNorm param)
+    public float ReadShapeParamBuffer(ShapeParamLabels shape, ShapeParamsNorm param)
     {
-        Transform uiGroup = uiGroups[(int)shape].transform;
-        uiGroup = uiGroup.transform.Find("Controls");
+        return shapeParamDataBuffer[(int)shape].GetValue(param);
+    }
 
-        if (!shapeParamUIMap.TryGetValue(param, out UIParamInfo info)) return null;
+    public float ReadShapeParamClipboard(ShapeParamLabels shape, ShapeParamsNorm param)
+    {
+        return shapeParamDataClipboard.GetValue(param);
+    }
 
-        Transform group = uiGroup.Find(info.GroupName);
-        if (group == null) return null;
-
-        return group.Find(info.SliderName)?.GetComponent<Slider>();
+    public void WriteShapeParamBuffer(ShapeParamLabels shape, ShapeParamsNorm param, float value)
+    {
+        shapeParamDataBuffer[(int)shape].SetValue(param, value);
     }
 
     void UpdateUIReadouts()
@@ -1353,53 +1344,52 @@ public class SceneController : MonoBehaviour
         numObjectsReadout.text = $"{numObjectsInScene}";
     }
 
-    void Quit()
+    void UpdateDraggingMenu()
     {
-        Application.Quit();
-    }
-}
-
-public static class SliderInputBinder
-{
-    public static void Bind(
-        Slider slider,
-        TMP_InputField inputField,
-        bool wholeNumbers = false)
-    {
-        bool isUpdating = false;
-
-        void OnSliderChanged(float value)
+        if (selectedMenuRect == null)
         {
-            if (isUpdating) return;
-            isUpdating = true;
-            inputField.text = wholeNumbers ? ((int)value).ToString() : value.ToString("0.00");
-            isUpdating = false;
+            lastMousePosition = Vector2.zero;
+            return;
         }
 
-        void OnInputChanged(string text)
-        {
-            if (isUpdating) return;
+        RectTransform titleRect = selectedMenuRect.GetComponent<UI_ObjectParams>().titleRect;
+        RectTransform parentRect = selectedMenuRect.parent as RectTransform;
+        
+        Vector2 mousePosition = Input.mousePosition;
 
-            if (float.TryParse(text, out float value))
-            {
-                float clampedValue = Mathf.Clamp(value, slider.minValue, slider.maxValue);
+        if (lastMousePosition == Vector2.zero)
+            lastMousePosition = mousePosition;
 
-                isUpdating = true;
+        // Convert mouse positions to local points relative to the parent
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRect, mousePosition, null, out Vector2 localMousePos);
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRect, lastMousePosition, null, out Vector2 localLastMousePos);
 
-                slider.value = clampedValue;
+        // Apply delta to menu position
+        selectedMenuRect.anchoredPosition += localMousePos - localLastMousePos;
+        lastMousePosition = mousePosition;
 
-                if (!Mathf.Approximately(value, clampedValue))
-                {
-                    inputField.text = wholeNumbers ? ((int)clampedValue).ToString() : clampedValue.ToString("0.00");
-                }
+        // Adjusted screen boundaries relative to the parent
+        Rect adjustedBoundary = new Rect(
+            uiScreenBoundary.x - parentRect.rect.width * parentRect.pivot.x,
+            uiScreenBoundary.y - parentRect.rect.height * parentRect.pivot.y,
+            uiScreenBoundary.width,
+            uiScreenBoundary.height
+        );
 
-                isUpdating = false;
-            }
-        }
+        // Get size and position for clamping
+        Vector2 size = selectedMenuRect.rect.size;
+        Vector2 pos = selectedMenuRect.anchoredPosition;
 
-        slider.onValueChanged.AddListener(OnSliderChanged);
-        inputField.onEndEdit.AddListener(OnInputChanged);
+        // Clamping boundaries
+        float minX = adjustedBoundary.xMin + size.x * selectedMenuRect.pivot.x;
+        float maxX = adjustedBoundary.xMax - size.x * (1 - selectedMenuRect.pivot.x);
+        float minY = adjustedBoundary.yMin + size.y * selectedMenuRect.pivot.y - (size.y - titleRect.rect.height);
+        float maxY = adjustedBoundary.yMax - size.y * (1 - selectedMenuRect.pivot.y);
 
-        inputField.text = wholeNumbers ? ((int)slider.value).ToString() : slider.value.ToString("0.00");
+        // Clamp position
+        selectedMenuRect.anchoredPosition = new Vector2(
+            Mathf.Clamp(pos.x, minX, maxX),
+            Mathf.Clamp(pos.y, minY, maxY)
+        );
     }
 }

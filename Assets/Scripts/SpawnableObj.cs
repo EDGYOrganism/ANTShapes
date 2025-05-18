@@ -38,15 +38,24 @@ public class SpawnableObj : MonoBehaviour
 
         gameObject.transform.Rotate(rotation * sceneController.timeScale);
         gameObject.transform.position += translation * sceneController.timeScale;
-        
-        // Objects in view have their respawn flag cleared
-        if (!IsOutOfView())
-            respawning = false;
+
+        bool[] outOfView = IsOutOfView();
+
         // Object has just left view
-        else 
+        if ((outOfView[0] && !sceneController.reboundOnEdges[0]) ||
+            (outOfView[1] && !sceneController.reboundOnEdges[1]) ||
+            (outOfView[2] && !sceneController.reboundOnEdges[2]) ||
+            (outOfView[3] && !sceneController.reboundOnEdges[3]) ||
+            (outOfView[4] && !sceneController.reboundOnEdges[4]) ||
+            (outOfView[5] && !sceneController.reboundOnEdges[5]))
         {
             if (!respawning)
                 SetBehavior(true);
+        }
+        // Objects in view have their respawn flag cleared
+        else
+        {
+            respawning = false;
         }
     }
 
@@ -293,10 +302,10 @@ public class SpawnableObj : MonoBehaviour
         }
         
         Vector3 localScale = new Vector3(thisShapeParamValues[(int)ShapeParams.X_SCALE], thisShapeParamValues[(int)ShapeParams.Y_SCALE], thisShapeParamValues[(int)ShapeParams.Z_SCALE]) + 
-                             new Vector3(globalShapeParamValues[(int)ShapeParams.X_SCALE], globalShapeParamValues[(int)ShapeParams.Y_SCALE], globalShapeParamValues[(int)ShapeParams.Z_SCALE]);
-        localScale.x = Mathf.Clamp(localScale.x, 0.25f, 10f);
-        localScale.y = Mathf.Clamp(localScale.y, 0.25f, 10f);
-        localScale.z = Mathf.Clamp(localScale.z, 0.25f, 10f);
+                             new Vector3(globalShapeParamValues[(int)ShapeParams.X_SCALE], globalShapeParamValues[(int)ShapeParams.Y_SCALE], globalShapeParamValues[(int)ShapeParams.Z_SCALE]) / 2f;
+        localScale.x = Mathf.Clamp(localScale.x, 0.25f, 2f);
+        localScale.y = Mathf.Clamp(localScale.y, 0.25f, 2f);
+        localScale.z = Mathf.Clamp(localScale.z, 0.25f, 2f);
         gameObject.transform.localScale = localScale;
     }
 
@@ -332,9 +341,12 @@ public class SpawnableObj : MonoBehaviour
         {
             gameObject.transform.position -= translation.normalized * stepSize;
 
-            if (IsOutOfView())
+            bool[] outOfView = IsOutOfView();
+
+            for (int j = 0; j < 6; j++)
             {
-                return;
+                if (outOfView[j])
+                    return;
             }
         }
 
@@ -375,7 +387,7 @@ public class SpawnableObj : MonoBehaviour
 
         initPosition.x = Mathf.Clamp01(initPosition.x);
         initPosition.y = Mathf.Clamp01(initPosition.y);
-        initPosition.z = sceneController.sceneDepth * Mathf.Clamp01(initPosition.z);
+        initPosition.z = sceneController.sceneDepth * Mathf.Clamp01(initPosition.z) + sceneController.zCloseBoundary;
 
         return MapToViewport(FixZPositionToCamera(initPosition));
     }
@@ -421,7 +433,56 @@ public class SpawnableObj : MonoBehaviour
         return intersectedPlanes;
     }
 
-    bool IsOutOfView()
+    bool[] IsOutOfView()
+    {
+        // Calculate the 8 corners of the rotated bounding box
+        Vector3[] corners = new Vector3[8];
+        Bounds bounds = meshRenderer.bounds;
+
+        Vector3 min = bounds.min;
+        Vector3 max = bounds.max;
+
+        corners[0] = new Vector3(min.x, min.y, min.z);
+        corners[1] = new Vector3(max.x, min.y, min.z);
+        corners[2] = new Vector3(min.x, min.y, max.z);
+        corners[3] = new Vector3(max.x, min.y, max.z);
+        corners[4] = new Vector3(min.x, max.y, min.z);
+        corners[5] = new Vector3(max.x, max.y, min.z);
+        corners[6] = new Vector3(min.x, max.y, max.z);
+        corners[7] = new Vector3(max.x, max.y, max.z);
+
+        float[] isOutside = { 0, 0, 0, 0, 0, 0 };
+
+        foreach (Vector3 corner in corners)
+        {
+            Vector3 viewportPoint = sceneController.renderCamera.WorldToViewportPoint(corner);
+
+            if (viewportPoint.x < 0)
+                isOutside[0]++;
+            else if (viewportPoint.x > 1)
+                isOutside[1]++;
+
+            if (viewportPoint.y < 0)
+                isOutside[2]++;
+            else if (viewportPoint.y > 1)
+                isOutside[3]++;
+
+            if (corner.z < sceneController.zCameraClip)
+                isOutside[4]++;
+            else if (corner.z > sceneController.zSpawnBoundary)
+                isOutside[5]++;
+        }
+
+        bool[] ret = new bool[6];
+        for (int i = 0; i < 6; i++)
+        {
+            ret[i] = isOutside[i] == 8;
+        }
+
+        return ret;
+    }
+
+    Vector3 ShouldReboundOnAxis()
     {
         // Calculate the 8 corners of the rotated bounding box
         Vector3[] corners = new Vector3[8];
@@ -440,41 +501,22 @@ public class SpawnableObj : MonoBehaviour
         corners[6] = new Vector3(min.x, max.y, max.z);
         corners[7] = new Vector3(max.x, max.y, max.z);
 
-        bool allOutside = true;
+        Vector3 ret = Vector3.zero;
 
         foreach (Vector3 corner in corners)
         {
-            Vector3 viewportPoint = sceneController.renderCamera.WorldToViewportPoint(gameObject.transform.rotation * (corner - center) + center);
+            List<string> intersects = GetIntersectedCameraPlanes(corner);
 
-            // If at least one point is inside the viewport, the object is not fully out of view
-            if (viewportPoint.x > 0 && viewportPoint.x < 1 &&
-                viewportPoint.y > 0 && viewportPoint.y < 1 &&
-                viewportPoint.z > sceneController.zCameraClip && viewportPoint.z < sceneController.zSpawnBoundary)
-            {
-                allOutside = false;
-                break;
-            }
+            if (intersects.Count == 0)
+                continue;
+
+            if ((intersects.Contains("-X") && translation.x < 0 && sceneController.reboundOnEdges[0]) || (intersects.Contains("+X") && translation.x > 0 && sceneController.reboundOnEdges[1]))
+                ret.x = 1;
+            if ((intersects.Contains("-Y") && translation.y < 0 && sceneController.reboundOnEdges[2]) || (intersects.Contains("+Y") && translation.y > 0 && sceneController.reboundOnEdges[3]))
+                ret.y = 1;
+            if ((intersects.Contains("-Z") && translation.z < 0 && sceneController.reboundOnEdges[4]) || (intersects.Contains("+Z") && translation.z > 0 && sceneController.reboundOnEdges[5]))
+                ret.z = 1;
         }
-
-        return allOutside;
-    }
-
-    Vector3 ShouldReboundOnAxis()
-    {
-        Vector3 ret = Vector3.zero;
-        Vector3 center = meshRenderer.bounds.center;
-
-        List<string> intersects = GetIntersectedCameraPlanes(meshRenderer.bounds.center);
-            
-        if (intersects.Count == 0)
-            return ret;
-
-        if ((intersects.Contains("-X") && translation.x < 0 && sceneController.reboundOnEdges[0]) || (intersects.Contains("+X") && translation.x > 0 && sceneController.reboundOnEdges[1]))
-            ret.x = 1;
-        if ((intersects.Contains("-Y") && translation.y < 0 && sceneController.reboundOnEdges[2]) || (intersects.Contains("+Y") && translation.y > 0 && sceneController.reboundOnEdges[3]))
-            ret.y = 1;
-        if ((intersects.Contains("-Z") && translation.z < 0 && sceneController.reboundOnEdges[4]) || (intersects.Contains("+Z") && translation.z > 0 && sceneController.reboundOnEdges[5]))
-            ret.z = 1;
 
         return ret;
     }
@@ -488,16 +530,16 @@ public class SpawnableObj : MonoBehaviour
         ShapeParamsNorm[] normParams = Utils.ShapeParamToShapeParamNorm(param);
 
         // Compute probability of shape-exclusive parameters
-        std = sceneController.shapeParamData[(int)shape].data[(int)normParams[1]];
-        if (std > 0)
+        std = sceneController.ReadShapeParam((ShapeParamLabels)shape, normParams[1]);
+        if (std > 0 && sceneController.ReadShapeParam((ShapeParamLabels)shape, normParams[2]) > 0)
         {
             p += -2f * Mathf.Log(NormalRandom.PValue(thisShapeParamValuesRaw[(int)param]));
             n++;
         }
 
         // Sum with probability from global parameters
-        std = sceneController.shapeParamData[(int)ShapeParamLabels.GLOBAL].data[(int)normParams[1]];
-        if (std > 0)
+        std = sceneController.ReadShapeParam(ShapeParamLabels.GLOBAL, normParams[1]);
+        if (std > 0 && sceneController.ReadShapeParam(ShapeParamLabels.GLOBAL, normParams[2]) > 0)
         {
             p += -2f * Mathf.Log(NormalRandom.PValue(globalShapeParamValuesRaw[(int)param]));
             n++;
@@ -530,11 +572,6 @@ public class SpawnableObj : MonoBehaviour
         for (int i = 0; i < (int)ShapeParams.COUNT; i++)
         {
             ShapeParams param = (ShapeParams)i;
-
-            // Skip initial rotation and position if we don't want to include them in anomaly identification
-            if (!sceneController.includeInitPosRotation && 
-                ((param >= ShapeParams.X_INIT_ROTATION && param <= ShapeParams.Z_INIT_ROTATION) || (param >= ShapeParams.X_INIT_POSITION && param <= ShapeParams.Z_INIT_POSITION)))
-                continue;
 
             float pVal = EvaluateNormalPValue(param);
             
