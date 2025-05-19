@@ -13,6 +13,14 @@ public class NormalRandom : MonoBehaviour
         return z0;
     }
 
+    // Calculate two-tailed p-value for a given value
+    public static float PValue(float x)
+    {
+        float cdf = CDF(x);
+        float p = x > 0 ? 2f * (1f - cdf) : 2f * cdf;
+        return p;
+    }
+
     // Approximate CDF of the normal distribution
     public static float CDF(float x)
     {
@@ -38,14 +46,6 @@ public class NormalRandom : MonoBehaviour
         float y = 1f - (((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t) * Mathf.Exp(-x * x);
 
         return sign * y;
-    }
-
-    // Calculate two-tailed p-value for a given value
-    public static float PValue(float x)
-    {
-        float cdf = CDF(x);
-        float p = x > 0 ? 2f * (1f - cdf) : 2f * cdf;
-        return p;
     }
 
     public static float ChiSquaredCDF(float x, int k)

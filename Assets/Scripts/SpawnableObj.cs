@@ -177,135 +177,181 @@ public class SpawnableObj : MonoBehaviour
         return val * std + mean;
     }
 
-    public void SetRotation()
+    private Vector3 ProcessShapeParams(
+        ShapeParamsNorm xMeanParam, ShapeParamsNorm yMeanParam, ShapeParamsNorm zMeanParam,
+        ShapeParamsNorm xStdParam, ShapeParamsNorm yStdParam, ShapeParamsNorm zStdParam,
+        ShapeParams xRawParam, ShapeParams yRawParam, ShapeParams zRawParam,
+        ShapeParams xParam, ShapeParams yParam, ShapeParams zParam,
+        bool useGlobal, bool useFuzziness = true)
     {
-        foreach (var axis in new[] { (ShapeParams.X_ROTATION, ShapeParamsNorm.X_ROTATION_MEAN, ShapeParamsNorm.X_ROTATION_STD),
-                                     (ShapeParams.Y_ROTATION, ShapeParamsNorm.Y_ROTATION_MEAN, ShapeParamsNorm.Y_ROTATION_STD),
-                                     (ShapeParams.Z_ROTATION, ShapeParamsNorm.Z_ROTATION_MEAN, ShapeParamsNorm.Z_ROTATION_STD) })
-        {
-            int shapeParam = (int)axis.Item1;
-            
-            // Local
-            thisShapeParamValuesRaw[shapeParam] = NormalRandom.Sample(sceneController.rngTransform);
-            thisShapeParamValues[shapeParam] = TransformSampledValue(thisShapeParamValuesRaw[shapeParam], 
-                                                                     ReadShapeParam(axis.Item2), 
-                                                                     ReadShapeParam(axis.Item3));
+        Vector3 mean = new Vector3(
+            useGlobal ? ReadGlobalShapeParam(xMeanParam) : ReadShapeParam(xMeanParam),
+            useGlobal ? ReadGlobalShapeParam(yMeanParam) : ReadShapeParam(yMeanParam),
+            useGlobal ? ReadGlobalShapeParam(zMeanParam) : ReadShapeParam(zMeanParam)
+        );
 
-            // Global
-            globalShapeParamValuesRaw[shapeParam] = NormalRandom.Sample(sceneController.rngTransform);
-            globalShapeParamValues[shapeParam] = TransformSampledValue(globalShapeParamValuesRaw[shapeParam], 
-                                                                       ReadGlobalShapeParam(axis.Item2), 
-                                                                       ReadGlobalShapeParam(axis.Item3));
+        Vector3 std = new Vector3(
+            useGlobal ? ReadGlobalShapeParam(xStdParam) : ReadShapeParam(xStdParam),
+            useGlobal ? ReadGlobalShapeParam(yStdParam) : ReadShapeParam(yStdParam),
+            useGlobal ? ReadGlobalShapeParam(zStdParam) : ReadShapeParam(zStdParam)
+        );
+
+        Vector3 sample = new Vector3(
+            NormalRandom.Sample(sceneController.rngTransform),
+            NormalRandom.Sample(sceneController.rngTransform),
+            NormalRandom.Sample(sceneController.rngTransform)
+        );
+
+        if (useGlobal)
+        {
+            globalShapeParamValuesRaw[(int)xRawParam] = sample.x;
+            globalShapeParamValuesRaw[(int)yRawParam] = sample.y;
+            globalShapeParamValuesRaw[(int)zRawParam] = sample.z;
+        }
+        else
+        {
+            thisShapeParamValuesRaw[(int)xRawParam] = sample.x;
+            thisShapeParamValuesRaw[(int)yRawParam] = sample.y;
+            thisShapeParamValuesRaw[(int)zRawParam] = sample.z;
         }
 
-        targetRotation = new Vector3(thisShapeParamValues[(int)ShapeParams.X_ROTATION], thisShapeParamValues[(int)ShapeParams.Y_ROTATION], thisShapeParamValues[(int)ShapeParams.Z_ROTATION]) + 
-                         new Vector3(globalShapeParamValues[(int)ShapeParams.X_ROTATION], globalShapeParamValues[(int)ShapeParams.Y_ROTATION], globalShapeParamValues[(int)ShapeParams.Z_ROTATION]);
-        rotation = targetRotation;
+        if (useFuzziness)
+        {
+            sample.x = TransformSampledValue(sample.x, mean.x, std.x);
+            sample.y = TransformSampledValue(sample.y, mean.y, std.y);
+            sample.z = TransformSampledValue(sample.z, mean.z, std.z);
+        }
+        else
+        {
+            sample.x = TransformSampledValueWithoutFuzziness(sample.x, mean.x, std.x);
+            sample.y = TransformSampledValueWithoutFuzziness(sample.y, mean.y, std.y);
+            sample.z = TransformSampledValueWithoutFuzziness(sample.z, mean.z, std.z);
+        }
 
-        
+        if (useGlobal)
+        {
+            globalShapeParamValues[(int)xParam] = sample.x;
+            globalShapeParamValues[(int)yParam] = sample.y;
+            globalShapeParamValues[(int)zParam] = sample.z;
+        }
+        else
+        {
+            thisShapeParamValues[(int)xParam] = sample.x;
+            thisShapeParamValues[(int)yParam] = sample.y;
+            thisShapeParamValues[(int)zParam] = sample.z;
+        }
+
+        return sample;
+    }
+
+    public void SetRotation()
+    {
+        Vector3 localSample = ProcessShapeParams(
+            ShapeParamsNorm.X_ROTATION_MEAN, ShapeParamsNorm.Y_ROTATION_MEAN, ShapeParamsNorm.Z_ROTATION_MEAN,
+            ShapeParamsNorm.X_ROTATION_STD, ShapeParamsNorm.Y_ROTATION_STD, ShapeParamsNorm.Z_ROTATION_STD,
+            ShapeParams.X_ROTATION, ShapeParams.Y_ROTATION, ShapeParams.Z_ROTATION,
+            ShapeParams.X_ROTATION, ShapeParams.Y_ROTATION, ShapeParams.Z_ROTATION,
+            useGlobal: false
+        );
+
+        Vector3 globalSample = ProcessShapeParams(
+            ShapeParamsNorm.X_ROTATION_MEAN, ShapeParamsNorm.Y_ROTATION_MEAN, ShapeParamsNorm.Z_ROTATION_MEAN,
+            ShapeParamsNorm.X_ROTATION_STD, ShapeParamsNorm.Y_ROTATION_STD, ShapeParamsNorm.Z_ROTATION_STD,
+            ShapeParams.X_ROTATION, ShapeParams.Y_ROTATION, ShapeParams.Z_ROTATION,
+            ShapeParams.X_ROTATION, ShapeParams.Y_ROTATION, ShapeParams.Z_ROTATION,
+            useGlobal: true
+        );
+
+        targetRotation = localSample + globalSample;
+        rotation = targetRotation;
     }
 
     public void SetInitialRotation()
     {
-        foreach (var axis in new[] { ((int)ShapeParams.X_INIT_ROTATION, ShapeParamsNorm.X_INIT_ROTATION_MEAN, ShapeParamsNorm.X_INIT_ROTATION_STD),
-                                     ((int)ShapeParams.Y_INIT_ROTATION, ShapeParamsNorm.Y_INIT_ROTATION_MEAN, ShapeParamsNorm.Y_INIT_ROTATION_STD),
-                                     ((int)ShapeParams.Z_INIT_ROTATION, ShapeParamsNorm.Z_INIT_ROTATION_MEAN, ShapeParamsNorm.Z_INIT_ROTATION_STD) })
-        {
-            int shapeParam = (int)axis.Item1;
-            
-            // Local
-            thisShapeParamValuesRaw[shapeParam] = NormalRandom.Sample(sceneController.rngTransform);
-            thisShapeParamValues[shapeParam] = TransformSampledValueWithoutFuzziness(thisShapeParamValuesRaw[shapeParam], 
-                                                                                     ReadShapeParam(axis.Item2), 
-                                                                                     ReadShapeParam(axis.Item3));
+        Vector3 localSample = ProcessShapeParams(
+            ShapeParamsNorm.X_INIT_ROTATION_MEAN, ShapeParamsNorm.Y_INIT_ROTATION_MEAN, ShapeParamsNorm.Z_INIT_ROTATION_MEAN,
+            ShapeParamsNorm.X_INIT_ROTATION_STD, ShapeParamsNorm.Y_INIT_ROTATION_STD, ShapeParamsNorm.Z_INIT_ROTATION_STD,
+            ShapeParams.X_INIT_ROTATION, ShapeParams.Y_INIT_ROTATION, ShapeParams.Z_INIT_ROTATION,
+            ShapeParams.X_INIT_ROTATION, ShapeParams.Y_INIT_ROTATION, ShapeParams.Z_INIT_ROTATION,
+            useGlobal: false, useFuzziness: false
+        );
 
-            // Global
-            globalShapeParamValuesRaw[shapeParam] = NormalRandom.Sample(sceneController.rngTransform);
-            globalShapeParamValues[shapeParam] = TransformSampledValueWithoutFuzziness(globalShapeParamValuesRaw[shapeParam], 
-                                                                                       ReadGlobalShapeParam(axis.Item2), 
-                                                                                       ReadGlobalShapeParam(axis.Item3));
-        }
+        Vector3 globalSample = ProcessShapeParams(
+            ShapeParamsNorm.X_INIT_ROTATION_MEAN, ShapeParamsNorm.Y_INIT_ROTATION_MEAN, ShapeParamsNorm.Z_INIT_ROTATION_MEAN,
+            ShapeParamsNorm.X_INIT_ROTATION_STD, ShapeParamsNorm.Y_INIT_ROTATION_STD, ShapeParamsNorm.Z_INIT_ROTATION_STD,
+            ShapeParams.X_INIT_ROTATION, ShapeParams.Y_INIT_ROTATION, ShapeParams.Z_INIT_ROTATION,
+            ShapeParams.X_INIT_ROTATION, ShapeParams.Y_INIT_ROTATION, ShapeParams.Z_INIT_ROTATION,
+            useGlobal: true, useFuzziness: false
+        );
 
-        gameObject.transform.localEulerAngles = new Vector3(thisShapeParamValues[(int)ShapeParams.X_INIT_ROTATION], thisShapeParamValues[(int)ShapeParams.Y_INIT_ROTATION], thisShapeParamValues[(int)ShapeParams.Z_INIT_ROTATION]) + 
-                                                new Vector3(globalShapeParamValues[(int)ShapeParams.X_INIT_ROTATION], globalShapeParamValues[(int)ShapeParams.Y_INIT_ROTATION], globalShapeParamValues[(int)ShapeParams.Z_INIT_ROTATION]);
+        gameObject.transform.localEulerAngles = localSample + globalSample;
     }
 
     public void SetTranslation()
     {
-        foreach (var axis in new[] { ((int)ShapeParams.X_TRANSLATION, ShapeParamsNorm.X_TRANSLATION_MEAN, ShapeParamsNorm.X_TRANSLATION_STD),
-                                     ((int)ShapeParams.Y_TRANSLATION, ShapeParamsNorm.Y_TRANSLATION_MEAN, ShapeParamsNorm.Y_TRANSLATION_STD),
-                                     ((int)ShapeParams.Z_TRANSLATION, ShapeParamsNorm.Z_TRANSLATION_MEAN, ShapeParamsNorm.Z_TRANSLATION_STD) })
-        {
-            int shapeParam = (int)axis.Item1;
-            
-            // Local
-            thisShapeParamValuesRaw[shapeParam] = NormalRandom.Sample(sceneController.rngTransform);
-            thisShapeParamValues[shapeParam] = TransformSampledValue(thisShapeParamValuesRaw[shapeParam], 
-                                                                     ReadShapeParam(axis.Item2), 
-                                                                     ReadShapeParam(axis.Item3));
+        Vector3 localSample = ProcessShapeParams(
+            ShapeParamsNorm.X_TRANSLATION_MEAN, ShapeParamsNorm.Y_TRANSLATION_MEAN, ShapeParamsNorm.Z_TRANSLATION_MEAN,
+            ShapeParamsNorm.X_TRANSLATION_STD, ShapeParamsNorm.Y_TRANSLATION_STD, ShapeParamsNorm.Z_TRANSLATION_STD,
+            ShapeParams.X_TRANSLATION, ShapeParams.Y_TRANSLATION, ShapeParams.Z_TRANSLATION,
+            ShapeParams.X_TRANSLATION, ShapeParams.Y_TRANSLATION, ShapeParams.Z_TRANSLATION,
+            useGlobal: false
+        );
 
-            // Global
-            globalShapeParamValuesRaw[shapeParam] = NormalRandom.Sample(sceneController.rngTransform);
-            globalShapeParamValues[shapeParam] = TransformSampledValue(globalShapeParamValuesRaw[shapeParam], 
-                                                                       ReadGlobalShapeParam(axis.Item2), 
-                                                                       ReadGlobalShapeParam(axis.Item3));
-        }
+        Vector3 globalSample = ProcessShapeParams(
+            ShapeParamsNorm.X_TRANSLATION_MEAN, ShapeParamsNorm.Y_TRANSLATION_MEAN, ShapeParamsNorm.Z_TRANSLATION_MEAN,
+            ShapeParamsNorm.X_TRANSLATION_STD, ShapeParamsNorm.Y_TRANSLATION_STD, ShapeParamsNorm.Z_TRANSLATION_STD,
+            ShapeParams.X_TRANSLATION, ShapeParams.Y_TRANSLATION, ShapeParams.Z_TRANSLATION,
+            ShapeParams.X_TRANSLATION, ShapeParams.Y_TRANSLATION, ShapeParams.Z_TRANSLATION,
+            useGlobal: true
+        );
 
-        translation = new Vector3(thisShapeParamValues[(int)ShapeParams.X_TRANSLATION], thisShapeParamValues[(int)ShapeParams.Y_TRANSLATION], thisShapeParamValues[(int)ShapeParams.Z_TRANSLATION]) + 
-                      new Vector3(globalShapeParamValues[(int)ShapeParams.X_TRANSLATION], globalShapeParamValues[(int)ShapeParams.Y_TRANSLATION], globalShapeParamValues[(int)ShapeParams.Z_TRANSLATION]);
-        translation *= 0.037f;
+        translation = (localSample + globalSample) * 0.037f;
     }
 
     public void SetInitialPosition()
     {
-        foreach (var axis in new[] { ((int)ShapeParams.X_INIT_POSITION, ShapeParamsNorm.X_INIT_POSITION_MEAN, ShapeParamsNorm.X_INIT_POSITION_STD),
-                                     ((int)ShapeParams.Y_INIT_POSITION, ShapeParamsNorm.Y_INIT_POSITION_MEAN, ShapeParamsNorm.Y_INIT_POSITION_STD),
-                                     ((int)ShapeParams.Z_INIT_POSITION, ShapeParamsNorm.Z_INIT_POSITION_MEAN, ShapeParamsNorm.Z_INIT_POSITION_STD) })
-        {
-            int shapeParam = (int)axis.Item1;
-            
-            // Local
-            thisShapeParamValuesRaw[shapeParam] = NormalRandom.Sample(sceneController.rngTransform);
-            thisShapeParamValues[shapeParam] = TransformSampledValueWithoutFuzziness(thisShapeParamValuesRaw[shapeParam], 
-                                                                                     ReadShapeParam(axis.Item2), 
-                                                                                     ReadShapeParam(axis.Item3));
+        ProcessShapeParams(
+            ShapeParamsNorm.X_INIT_POSITION_MEAN, ShapeParamsNorm.Y_INIT_POSITION_MEAN, ShapeParamsNorm.Z_INIT_POSITION_MEAN,
+            ShapeParamsNorm.X_INIT_POSITION_STD, ShapeParamsNorm.Y_INIT_POSITION_STD, ShapeParamsNorm.Z_INIT_POSITION_STD,
+            ShapeParams.X_INIT_POSITION, ShapeParams.Y_INIT_POSITION, ShapeParams.Z_INIT_POSITION,
+            ShapeParams.X_INIT_POSITION, ShapeParams.Y_INIT_POSITION, ShapeParams.Z_INIT_POSITION,
+            useGlobal: false, useFuzziness: false
+        );
 
-            // Global
-            globalShapeParamValuesRaw[shapeParam] = NormalRandom.Sample(sceneController.rngTransform);
-            globalShapeParamValues[shapeParam] = TransformSampledValueWithoutFuzziness(globalShapeParamValuesRaw[shapeParam], 
-                                                                                       ReadGlobalShapeParam(axis.Item2), 
-                                                                                       ReadGlobalShapeParam(axis.Item3));
-        }
+        ProcessShapeParams(
+            ShapeParamsNorm.X_INIT_POSITION_MEAN, ShapeParamsNorm.Y_INIT_POSITION_MEAN, ShapeParamsNorm.Z_INIT_POSITION_MEAN,
+            ShapeParamsNorm.X_INIT_POSITION_STD, ShapeParamsNorm.Y_INIT_POSITION_STD, ShapeParamsNorm.Z_INIT_POSITION_STD,
+            ShapeParams.X_INIT_POSITION, ShapeParams.Y_INIT_POSITION, ShapeParams.Z_INIT_POSITION,
+            ShapeParams.X_INIT_POSITION, ShapeParams.Y_INIT_POSITION, ShapeParams.Z_INIT_POSITION,
+            useGlobal: true, useFuzziness: false
+        );
 
         gameObject.transform.position = CalculateInitialWorldPos();
     }
 
     public void SetScale()
     {
-        foreach (var axis in new[] { ((int)ShapeParams.X_SCALE, ShapeParamsNorm.X_SCALE_MEAN, ShapeParamsNorm.X_SCALE_STD),
-                                     ((int)ShapeParams.Y_SCALE, ShapeParamsNorm.Y_SCALE_MEAN, ShapeParamsNorm.Y_SCALE_STD),
-                                     ((int)ShapeParams.Z_SCALE, ShapeParamsNorm.Z_SCALE_MEAN, ShapeParamsNorm.Z_SCALE_STD) })
-        {
-            int shapeParam = (int)axis.Item1;
-            
-            // Local
-            thisShapeParamValuesRaw[shapeParam] = NormalRandom.Sample(sceneController.rngTransform);
-            thisShapeParamValues[shapeParam] = TransformSampledValue(thisShapeParamValuesRaw[shapeParam], 
-                                                                     ReadShapeParam(axis.Item2), 
-                                                                     ReadShapeParam(axis.Item3));
+        Vector3 localSample = ProcessShapeParams(
+            ShapeParamsNorm.X_SCALE_MEAN, ShapeParamsNorm.Y_SCALE_MEAN, ShapeParamsNorm.Z_SCALE_MEAN,
+            ShapeParamsNorm.X_SCALE_STD, ShapeParamsNorm.Y_SCALE_STD, ShapeParamsNorm.Z_SCALE_STD,
+            ShapeParams.X_SCALE, ShapeParams.Y_SCALE, ShapeParams.Z_SCALE,
+            ShapeParams.X_SCALE, ShapeParams.Y_SCALE, ShapeParams.Z_SCALE,
+            useGlobal: false
+        );
 
-            // Global
-            globalShapeParamValuesRaw[shapeParam] = NormalRandom.Sample(sceneController.rngTransform);
-            globalShapeParamValues[shapeParam] = TransformSampledValue(globalShapeParamValuesRaw[shapeParam], 
-                                                                       ReadGlobalShapeParam(axis.Item2), 
-                                                                       ReadGlobalShapeParam(axis.Item3));
-        }
-        
-        Vector3 localScale = new Vector3(thisShapeParamValues[(int)ShapeParams.X_SCALE], thisShapeParamValues[(int)ShapeParams.Y_SCALE], thisShapeParamValues[(int)ShapeParams.Z_SCALE]) + 
-                             new Vector3(globalShapeParamValues[(int)ShapeParams.X_SCALE], globalShapeParamValues[(int)ShapeParams.Y_SCALE], globalShapeParamValues[(int)ShapeParams.Z_SCALE]) / 2f;
+        Vector3 globalSample = ProcessShapeParams(
+            ShapeParamsNorm.X_SCALE_MEAN, ShapeParamsNorm.Y_SCALE_MEAN, ShapeParamsNorm.Z_SCALE_MEAN,
+            ShapeParamsNorm.X_SCALE_STD, ShapeParamsNorm.Y_SCALE_STD, ShapeParamsNorm.Z_SCALE_STD,
+            ShapeParams.X_SCALE, ShapeParams.Y_SCALE, ShapeParams.Z_SCALE,
+            ShapeParams.X_SCALE, ShapeParams.Y_SCALE, ShapeParams.Z_SCALE,
+            useGlobal: true
+        );
+
+        Vector3 localScale = (localSample + globalSample) / 2f;
         localScale.x = Mathf.Clamp(localScale.x, 0.25f, 2f);
         localScale.y = Mathf.Clamp(localScale.y, 0.25f, 2f);
         localScale.z = Mathf.Clamp(localScale.z, 0.25f, 2f);
+
         gameObject.transform.localScale = localScale;
     }
 
@@ -323,7 +369,7 @@ public class SpawnableObj : MonoBehaviour
     Vector3 FixZPositionToCamera(Vector3 pos)
     {
         float zOffset = meshRenderer.bounds.size.z / 2;
-        
+
         pos.z += sceneController.zCameraClip + zOffset;
 
         if (pos.z <= sceneController.zCameraClip + zOffset)
@@ -425,7 +471,7 @@ public class SpawnableObj : MonoBehaviour
                     5 => "+Z",
                     _ => "Unknown"
                 };
-                
+
                 intersectedPlanes.Add(planeName);
             }
         }
@@ -521,33 +567,77 @@ public class SpawnableObj : MonoBehaviour
         return ret;
     }
 
-    public float EvaluateNormalPValue(ShapeParams param)
+    private void EvaluateComponent(ref float d2, ref int k, float value, float stdCondition, float dataCondition)
     {
-        float std = 0;
-        float p = 0;
-        int n = 0;
-
-        ShapeParamsNorm[] normParams = Utils.ShapeParamToShapeParamNorm(param);
-
-        // Compute probability of shape-exclusive parameters
-        std = sceneController.ReadShapeParam((ShapeParamLabels)shape, normParams[1]);
-        if (std > 0 && sceneController.ReadShapeParam((ShapeParamLabels)shape, normParams[2]) > 0)
+        if (dataCondition > 0 && stdCondition > 0)
         {
-            p += -2f * Mathf.Log(NormalRandom.PValue(thisShapeParamValuesRaw[(int)param]));
-            n++;
+            d2 += value * value; // Normalized: std = 1
+            k += 1;
         }
-
-        // Sum with probability from global parameters
-        std = sceneController.ReadShapeParam(ShapeParamLabels.GLOBAL, normParams[1]);
-        if (std > 0 && sceneController.ReadShapeParam(ShapeParamLabels.GLOBAL, normParams[2]) > 0)
-        {
-            p += -2f * Mathf.Log(NormalRandom.PValue(globalShapeParamValuesRaw[(int)param]));
-            n++;
-        }
-
-        return NormalRandom.ChiSquaredCDF(p, n * 2);
     }
 
+    public void Evaluate1DPValue(ref float d2, ref int k, ShapeParams param)
+    {
+        var normParams = Utils.ShapeParamToShapeParamNorm(param);
+
+        EvaluateComponent(ref d2, ref k, thisShapeParamValuesRaw[(int)param],
+                        ReadShapeParam(normParams[1]), ReadShapeParam(normParams[2]));
+
+        EvaluateComponent(ref d2, ref k, globalShapeParamValuesRaw[(int)param],
+                        ReadGlobalShapeParam(normParams[1]), ReadGlobalShapeParam(normParams[2]));
+    }
+
+    public void Evaluate3DPValue(ref float d2, ref int k,
+                                ShapeParams paramX, ShapeParams paramY, ShapeParams paramZ)
+    {
+        Evaluate3DComponent(ref d2, ref k, paramX);
+        Evaluate3DComponent(ref d2, ref k, paramY);
+        Evaluate3DComponent(ref d2, ref k, paramZ);
+    }
+
+    private void Evaluate3DComponent(ref float d2, ref int k, ShapeParams param)
+    {
+        var normParams = Utils.ShapeParamToShapeParamNorm(param);
+        int index = (int)param;
+
+        EvaluateComponent(ref d2, ref k, thisShapeParamValuesRaw[index],
+                        ReadShapeParam(normParams[1]), ReadShapeParam(normParams[2]));
+
+        EvaluateComponent(ref d2, ref k, globalShapeParamValuesRaw[index],
+                        ReadGlobalShapeParam(normParams[1]), ReadGlobalShapeParam(normParams[2]));
+    }
+
+    private float EvaluateAllPValues()
+    {
+        float d2 = 0;
+        int k = 0;
+
+        for (int i = 0; i < (int)ShapeParams.COUNT;)
+        {
+            ShapeParams param = (ShapeParams)i;
+
+            if (param == ShapeParams.SURFACE_NOISE)
+            {
+                Evaluate1DPValue(ref d2, ref k, param);
+                i++;
+            }
+            else
+            {
+                Evaluate3DPValue(ref d2, ref k,
+                    (ShapeParams)(i), (ShapeParams)(i + 1), (ShapeParams)(i + 2));
+                i += 3;
+            }
+        }
+
+        float overallPValue = 1f - NormalRandom.ChiSquaredCDF(d2, k);
+        return overallPValue > 0f ? overallPValue : 1f;
+    }
+
+    public float EvaluateOverallPValue()
+    {
+        return EvaluateAllPValues() * GetShapeProbability();
+    }
+    
     public float GetShapeProbability()
     {
         float totalP = 0;
@@ -562,31 +652,5 @@ public class SpawnableObj : MonoBehaviour
             return 1;
 
         return sceneController.shapeWeights[(int)shape] / totalP;
-    }
-
-    public float EvaluateOverallPValue()
-    {
-        float chiSquareStat = 0f;
-        int n = 0;
-
-        for (int i = 0; i < (int)ShapeParams.COUNT; i++)
-        {
-            ShapeParams param = (ShapeParams)i;
-
-            float pVal = EvaluateNormalPValue(param);
-            
-            if (pVal > 0)
-            {
-                chiSquareStat += -2f * Mathf.Log(pVal);
-                n++;
-            }
-        }
-
-        float combinedPValue = NormalRandom.ChiSquaredCDF(chiSquareStat, 2 * n);
-
-        if (combinedPValue <= 0)
-            combinedPValue = 1;
-
-        return combinedPValue * GetShapeProbability();
     }
 }

@@ -81,7 +81,6 @@ public class SceneController : MonoBehaviour
     [HideInInspector] public RectTransform selectedMenuRect;
     [HideInInspector] public int numMenusOpen = 0;
     [HideInInspector] public int menuSortCount = 0;
-    [HideInInspector] public Rect uiScreenBoundary;
 
     [Header("Simulation Settings")]
     public TMP_InputField durationInput;
@@ -188,8 +187,6 @@ public class SceneController : MonoBehaviour
         kernelHandleAnom = anomalyMask.FindKernel("CSMain");
         kernelHandlePrepareData = packEventBits.FindKernel("CSMain");
 
-        uiScreenBoundary = new Rect(lhPanelRect.rect.width, 0, Screen.width - rhPanelRect.rect.width - lhPanelRect.rect.width - 33, Screen.height - 13);  // Yeah idk why we need these magic numbers to make things look nice but we dooooooooo
-
         reboundOnEdges = new bool[6];
 
         // Init shape parameters
@@ -223,6 +220,8 @@ public class SceneController : MonoBehaviour
         Utils.SetupTextInputFormatting(seedInput, "", 8, -9999999, 9999999);
         Utils.SetupTextInputFormatting(timeScaleInput, "", 5, 0.001f, 100);
         Utils.SetupTextInputFormatting(durationInput, "", 6, 1, 999999);
+        Utils.SetupTextInputFormatting(textureWidthInput, "", 4, 32, 4096);
+        Utils.SetupTextInputFormatting(textureHeightInput, "", 4, 32, 4096);
         Utils.SetupTextInputFormatting(spikeThresholdInput, "", 6, 0, 0.5f);
         Utils.SetupTextInputFormatting(numSimulationsInput, "", 5, 1, 99999);
         Utils.SetupTextInputFormatting(minNumObjectsInput, "", 4, 1, maxNumObjectsHard);
@@ -1344,6 +1343,11 @@ public class SceneController : MonoBehaviour
         numObjectsReadout.text = $"{numObjectsInScene}";
     }
 
+    public Rect GetUIScreenBoundary()
+    {
+        return new Rect(lhPanelRect.rect.width, 0, Screen.width - rhPanelRect.rect.width - lhPanelRect.rect.width - 33, Screen.height - 13);  // Yeah idk why we need these magic numbers to make things look nice but we dooooooooo
+    }
+
     void UpdateDraggingMenu()
     {
         if (selectedMenuRect == null)
@@ -1367,6 +1371,8 @@ public class SceneController : MonoBehaviour
         // Apply delta to menu position
         selectedMenuRect.anchoredPosition += localMousePos - localLastMousePos;
         lastMousePosition = mousePosition;
+
+        Rect uiScreenBoundary = GetUIScreenBoundary();
 
         // Adjusted screen boundaries relative to the parent
         Rect adjustedBoundary = new Rect(
