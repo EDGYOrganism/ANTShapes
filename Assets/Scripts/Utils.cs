@@ -11,22 +11,22 @@ public enum ShapeParams { X_ROTATION, Y_ROTATION, Z_ROTATION,
                           X_SCALE, Y_SCALE, Z_SCALE, 
                           SURFACE_NOISE, 
                           COUNT}
-public enum ShapeParamsNorm { X_ROTATION_MEAN, X_ROTATION_STD, X_ROTATION_INCLUDE,
-                              Y_ROTATION_MEAN, Y_ROTATION_STD, Y_ROTATION_INCLUDE, 
-                              Z_ROTATION_MEAN, Z_ROTATION_STD, Z_ROTATION_INCLUDE,
-                              X_INIT_ROTATION_MEAN, X_INIT_ROTATION_STD, X_INIT_ROTATION_INCLUDE, 
-                              Y_INIT_ROTATION_MEAN, Y_INIT_ROTATION_STD, Y_INIT_ROTATION_INCLUDE, 
-                              Z_INIT_ROTATION_MEAN, Z_INIT_ROTATION_STD, Z_INIT_ROTATION_INCLUDE,
-                              X_TRANSLATION_MEAN, X_TRANSLATION_STD, X_TRANSLATION_INCLUDE, 
-                              Y_TRANSLATION_MEAN, Y_TRANSLATION_STD, Y_TRANSLATION_INCLUDE, 
-                              Z_TRANSLATION_MEAN, Z_TRANSLATION_STD, Z_TRANSLATION_INCLUDE,
-                              X_INIT_POSITION_MEAN, X_INIT_POSITION_STD, X_INIT_POSITION_INCLUDE, 
-                              Y_INIT_POSITION_MEAN, Y_INIT_POSITION_STD, Y_INIT_POSITION_INCLUDE, 
-                              Z_INIT_POSITION_MEAN, Z_INIT_POSITION_STD, Z_INIT_POSITION_INCLUDE,
-                              X_SCALE_MEAN, X_SCALE_STD, X_SCALE_INCLUDE, 
-                              Y_SCALE_MEAN, Y_SCALE_STD, Y_SCALE_INCLUDE, 
-                              Z_SCALE_MEAN, Z_SCALE_STD, Z_SCALE_INCLUDE,
-                              SURFACE_NOISE_MEAN, SURFACE_NOISE_STD, SURFACE_NOISE_INCLUDE,
+public enum ShapeParamsNorm { X_ROTATION_MEAN, X_ROTATION_STD,
+                              Y_ROTATION_MEAN, Y_ROTATION_STD, 
+                              Z_ROTATION_MEAN, Z_ROTATION_STD,
+                              X_INIT_ROTATION_MEAN, X_INIT_ROTATION_STD, 
+                              Y_INIT_ROTATION_MEAN, Y_INIT_ROTATION_STD, 
+                              Z_INIT_ROTATION_MEAN, Z_INIT_ROTATION_STD,
+                              X_TRANSLATION_MEAN, X_TRANSLATION_STD, 
+                              Y_TRANSLATION_MEAN, Y_TRANSLATION_STD, 
+                              Z_TRANSLATION_MEAN, Z_TRANSLATION_STD,
+                              X_INIT_POSITION_MEAN, X_INIT_POSITION_STD, 
+                              Y_INIT_POSITION_MEAN, Y_INIT_POSITION_STD, 
+                              Z_INIT_POSITION_MEAN, Z_INIT_POSITION_STD,
+                              X_SCALE_MEAN, X_SCALE_STD, 
+                              Y_SCALE_MEAN, Y_SCALE_STD, 
+                              Z_SCALE_MEAN, Z_SCALE_STD,
+                              SURFACE_NOISE_MEAN, SURFACE_NOISE_STD,
                               COUNT}
 
 public enum TextureMode { Real, Spikes }
@@ -139,14 +139,13 @@ public static class Utils
     public static ShapeParamsNorm[] ShapeParamToShapeParamNorm(ShapeParams param)
     {
         // Calculate the base index for the mean and std
-        int baseIndex = (int)param * 3;
+        int baseIndex = (int)param * 2;
 
         // Return the mean, std and inclusion based on the calculated index
         return new ShapeParamsNorm[]
         {
             (ShapeParamsNorm)baseIndex,
-            (ShapeParamsNorm)(baseIndex + 1),
-            (ShapeParamsNorm)(baseIndex + 2)
+            (ShapeParamsNorm)(baseIndex + 1)
         };
     }
 }
@@ -206,11 +205,7 @@ public struct ShapeParamData
     {
         if (param == ShapeParamsNorm.X_INIT_POSITION_MEAN || param == ShapeParamsNorm.Y_INIT_POSITION_MEAN || param == ShapeParamsNorm.Z_INIT_POSITION_MEAN)
             return 0.5f;
-        else if (param == ShapeParamsNorm.X_SCALE_MEAN || param == ShapeParamsNorm.Y_SCALE_MEAN || param == ShapeParamsNorm.Z_SCALE_MEAN ||
-                 param == ShapeParamsNorm.X_ROTATION_INCLUDE || param == ShapeParamsNorm.Y_ROTATION_INCLUDE || param == ShapeParamsNorm.Z_ROTATION_INCLUDE ||
-                 param == ShapeParamsNorm.X_TRANSLATION_INCLUDE || param == ShapeParamsNorm.Y_TRANSLATION_INCLUDE || param == ShapeParamsNorm.Z_TRANSLATION_INCLUDE ||
-                 param == ShapeParamsNorm.X_SCALE_INCLUDE || param == ShapeParamsNorm.Y_SCALE_INCLUDE || param == ShapeParamsNorm.Z_SCALE_INCLUDE ||
-                 param == ShapeParamsNorm.SURFACE_NOISE_INCLUDE)
+        else if (param == ShapeParamsNorm.X_SCALE_MEAN || param == ShapeParamsNorm.Y_SCALE_MEAN || param == ShapeParamsNorm.Z_SCALE_MEAN)
             return 1;
         else
             return 0;
@@ -221,11 +216,7 @@ public struct ShapeParamData
         if (param == ShapeParamsNorm.X_INIT_POSITION_MEAN || param == ShapeParamsNorm.Y_INIT_POSITION_MEAN || param == ShapeParamsNorm.Z_INIT_POSITION_MEAN)
             return 0.5f;
         else if (param == ShapeParamsNorm.X_ROTATION_MEAN || param == ShapeParamsNorm.Y_ROTATION_MEAN || param == ShapeParamsNorm.Z_ROTATION_MEAN ||
-                 param == ShapeParamsNorm.X_SCALE_MEAN || param == ShapeParamsNorm.Y_SCALE_MEAN || param == ShapeParamsNorm.Z_SCALE_MEAN ||
-                 param == ShapeParamsNorm.X_ROTATION_INCLUDE || param == ShapeParamsNorm.Y_ROTATION_INCLUDE || param == ShapeParamsNorm.Z_ROTATION_INCLUDE ||
-                 param == ShapeParamsNorm.X_TRANSLATION_INCLUDE || param == ShapeParamsNorm.Y_TRANSLATION_INCLUDE || param == ShapeParamsNorm.Z_TRANSLATION_INCLUDE ||
-                 param == ShapeParamsNorm.X_SCALE_INCLUDE || param == ShapeParamsNorm.Y_SCALE_INCLUDE || param == ShapeParamsNorm.Z_SCALE_INCLUDE ||
-                 param == ShapeParamsNorm.SURFACE_NOISE_INCLUDE)
+                 param == ShapeParamsNorm.X_SCALE_MEAN || param == ShapeParamsNorm.Y_SCALE_MEAN || param == ShapeParamsNorm.Z_SCALE_MEAN)
             return 1;
         else
             return 0;
@@ -254,21 +245,17 @@ struct UIParamInfo
     public string groupName;
     public ShapeParamsNorm meanParam;
     public ShapeParamsNorm stdParam;
-    public ShapeParamsNorm includeParam;
     public float minMean, minStd;
     public float maxMean, maxStd;
-    public float include;
 
-    public UIParamInfo(string groupName, ShapeParamsNorm meanParam, ShapeParamsNorm stdParam, ShapeParamsNorm includeParam, float minMean, float maxMean, float minStd, float maxStd, float include)
+    public UIParamInfo(string groupName, ShapeParamsNorm meanParam, ShapeParamsNorm stdParam, float minMean, float maxMean, float minStd, float maxStd)
     {
         this.groupName = groupName;
         this.meanParam = meanParam;
         this.stdParam = stdParam;
-        this.includeParam = includeParam;
         this.minMean = minMean;
         this.minStd = minStd;
         this.maxMean = maxMean;
         this.maxStd = maxStd;
-        this.include = include;
     }
 }

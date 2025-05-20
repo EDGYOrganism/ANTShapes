@@ -569,22 +569,33 @@ public class SpawnableObj : MonoBehaviour
 
     public void Evaluate1DPValue(ref float d2, ref int k, ShapeParams param)
     {
+        if (!sceneController.ShouldIncludeShapeParamInAnomaly(param))
+            return;
+
+        int n = 0;
+        float d2n = 0;
         ShapeParamsNorm[] normParams = Utils.ShapeParamToShapeParamNorm(param);
 
         // Local shape parameter
-        if (ReadShapeParam(normParams[2]) > 0 && ReadShapeParam(normParams[1]) > 0)
+        if (ReadShapeParam(normParams[1]) > 0)
         {
             float value = thisShapeParamValuesRaw[(int)param];
-            d2 += value * value; // std = 1 → value² / 1²
-            k += 1;
+            d2n += value * value; // std = 1 → value² / 1²
+            n++;
         }
 
         // Global parameter
-        if (ReadGlobalShapeParam(normParams[2]) > 0 && ReadGlobalShapeParam(normParams[1]) > 0)
+        if (ReadGlobalShapeParam(normParams[1]) > 0)
         {
             float value = globalShapeParamValuesRaw[(int)param];
-            d2 += value * value; // std = 1
-            k += 1;
+            d2n += value * value; // std = 1
+            n++;
+        }
+
+        if (n > 0)
+        {
+            d2 += d2n / n;
+            k++;
         }
     }
 
@@ -592,72 +603,84 @@ public class SpawnableObj : MonoBehaviour
     {
         // Helper function: no std needed now
         float AddComponent(float value) => value * value;
-        float std = 0;
-        float d2x, d2y, d2z;
-        float n = 0;
+        
+        bool includeX = sceneController.ShouldIncludeShapeParamInAnomaly(paramX);
+        bool includeY = sceneController.ShouldIncludeShapeParamInAnomaly(paramY);
+        bool includeZ = sceneController.ShouldIncludeShapeParamInAnomaly(paramZ);
 
         // X
-        d2x = 0;
-        if (ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramX)[2]) > 0 && ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramX)[1]) > 0)
+        if (includeX)
         {
-            std += ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramX)[1]);
-            d2x += thisShapeParamValuesRaw[(int)paramX];
-            n++;
-        }
-        if (ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramX)[2]) > 0 && ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramX)[1]) > 0)
-        {
-            std += ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramX)[1]);
-            d2x += globalShapeParamValuesRaw[(int)paramX];
-            n++;
-        }
-        if (std > 0)
-        {
-            d2 += AddComponent(d2x / n);
-            k += 1;
+            float std = 0;
+            float n = 0;
+            float d2x = 0;
+            if (ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramX)[1]) > 0)
+            {
+                std += ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramX)[1]);
+                d2x += thisShapeParamValuesRaw[(int)paramX];
+                n++;
+            }
+            if (ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramX)[1]) > 0)
+            {
+                std += ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramX)[1]);
+                d2x += globalShapeParamValuesRaw[(int)paramX];
+                n++;
+            }
+            if (std > 0)
+            {
+                d2 += AddComponent(d2x / n);
+                k += 1;
+            }
         }
 
         // Y
-        std = 0;
-        d2y = 0;
-        n = 0;
-        if (ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramY)[2]) > 0 && ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramY)[1]) > 0)
+        if (includeY)
         {
-            std += ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramY)[1]);
-            d2y += thisShapeParamValuesRaw[(int)paramY];
-            n++;
-        }
-        if (ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramY)[2]) > 0 && ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramY)[1]) > 0)
-        {
-            std += ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramY)[1]);
-            d2y += globalShapeParamValuesRaw[(int)paramY];
-            n++;
-        }
-        if (std > 0)
-        {
-            d2 += AddComponent(d2y / n);
-            k += 1;
+            float std = 0;
+            float n = 0;
+            float d2y = 0;
+            if (ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramY)[1]) > 0)
+            {
+                std += ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramY)[1]);
+                d2y += thisShapeParamValuesRaw[(int)paramY];
+                n++;
+            }
+            if (ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramY)[1]) > 0)
+            {
+                std += ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramY)[1]);
+                d2y += globalShapeParamValuesRaw[(int)paramY];
+                n++;
+            }
+            if (std > 0)
+            {
+                d2 += AddComponent(d2y / n);
+                k += 1;
+            }
         }
 
         // Z
-        std = 0;
-        d2z = 0;
-        n = 0;
-        if (ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramZ)[2]) > 0 && ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramZ)[1]) > 0)
+        if (includeZ)
         {
-            std += ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramZ)[1]);
-            d2z += thisShapeParamValuesRaw[(int)paramZ];
-            n++;
-        }
-        if (ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramZ)[2]) > 0 && ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramZ)[1]) > 0)
-        {
-            std += ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramZ)[1]);
-            d2z += globalShapeParamValuesRaw[(int)paramZ];
-            n++;
-        }
-        if (std > 0)
-        {
-            d2 += AddComponent(d2z / n);
-            k += 1;
+            float std = 0;
+            float n = 0;
+            float d2z = 0;
+            if (ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramZ)[1]) > 0)
+            {
+                std += ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramZ)[1]);
+                d2z += thisShapeParamValuesRaw[(int)paramZ];
+                n++;
+            }
+            if (ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramZ)[1]) > 0)
+            {
+                std += ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramZ)[1]);
+                d2z += globalShapeParamValuesRaw[(int)paramZ];
+                n++;
+            }
+            if (std > 0)
+            {
+                d2 += AddComponent(d2z / n);
+                k += 1;
+            }
         }
     }
 

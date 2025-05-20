@@ -147,6 +147,15 @@ public class SceneController : MonoBehaviour
     public Button closeAllMenusBtn;
     private bool changesMade = false;
 
+    [Header("Include Toggles")]
+    public List<Toggle> includeRotationTgls;
+    public List<Toggle> includeTranslationTgls;
+    public List<Toggle> includeScaleTgls;
+    public List<Toggle> includeInitRotationTgls;
+    public List<Toggle> includeInitPositionTgls;
+    public Toggle includeSurfaceNoiseTgl;
+    [HideInInspector] public bool[] includeShapeParam;
+
     [Header("UI Readouts")]
     public TMP_Text fpsReadout;
     public TMP_Text timeReadout;
@@ -200,6 +209,13 @@ public class SceneController : MonoBehaviour
         }
         shapeParamDataClipboard = new ShapeParamData();
         editParamMenus = new GameObject[count];
+
+        count = (int)ShapeParams.COUNT;
+        includeShapeParam = new bool[count];
+        for (int i = 0; i < count; i++)
+        {
+            includeShapeParam[i] = false;
+        }
 
         InitializeUIButtons();
         InitializeUIWeightControls();
@@ -669,6 +685,21 @@ public class SceneController : MonoBehaviour
     {
         pThresholdSlider.value = 0.01f;
         fuzzinessSlider.value = 0.5f;
+
+        for (int i = 0; i < 3; i++)
+        {
+            includeRotationTgls[i].isOn = true;
+            includeTranslationTgls[i].isOn = true;
+            includeScaleTgls[i].isOn = true;
+            includeInitRotationTgls[i].isOn = false;
+            includeInitPositionTgls[i].isOn = false;
+        }
+        includeSurfaceNoiseTgl.isOn = false;
+    }
+
+    public bool ShouldIncludeShapeParamInAnomaly(ShapeParams param)
+    {
+        return includeShapeParam[(int)param];
     }
 
     void ZeroShapeWeightSliders()
@@ -1310,6 +1341,17 @@ public class SceneController : MonoBehaviour
         // Update fog start distance
         fogDepth = (fogDepthNorm * sceneDepth) + zFarSpawnBuffer;
         fogStart = zSpawnBoundary - fogDepth;
+
+        // Reset
+        for (int i = 0; i < 3; i++)
+        {
+            includeShapeParam[(int)ShapeParams.X_ROTATION + i] = includeRotationTgls[i].isOn;
+            includeShapeParam[(int)ShapeParams.X_TRANSLATION + i] = includeTranslationTgls[i].isOn;
+            includeShapeParam[(int)ShapeParams.X_SCALE + i] = includeScaleTgls[i].isOn;
+            includeShapeParam[(int)ShapeParams.X_INIT_ROTATION + i] = includeInitRotationTgls[i].isOn;
+            includeShapeParam[(int)ShapeParams.X_INIT_POSITION + i] = includeInitPositionTgls[i].isOn;
+        }
+        includeShapeParam[(int)ShapeParams.SURFACE_NOISE] = includeSurfaceNoiseTgl.isOn;
 
         // Copy shape parameter values
         CopyAllShapeParamData(shapeParamDataBuffer, shapeParamData);

@@ -27,27 +27,27 @@ public class UI_ObjectParams : MonoBehaviour
     // Mapping from shape params to UI information
     private static readonly Dictionary<ShapeParams, UIParamInfo> shapeParamUIMap = new Dictionary<ShapeParams, UIParamInfo>
     {
-        { ShapeParams.X_ROTATION, new UIParamInfo("UI_XRotation", ShapeParamsNorm.X_ROTATION_MEAN, ShapeParamsNorm.X_ROTATION_STD, ShapeParamsNorm.X_ROTATION_INCLUDE, -2, 2, 0, 2, 1) },
-        { ShapeParams.Y_ROTATION, new UIParamInfo("UI_YRotation", ShapeParamsNorm.Y_ROTATION_MEAN, ShapeParamsNorm.Y_ROTATION_STD, ShapeParamsNorm.Y_ROTATION_INCLUDE, -2, 2, 0, 2, 1) },
-        { ShapeParams.Z_ROTATION, new UIParamInfo("UI_ZRotation", ShapeParamsNorm.Z_ROTATION_MEAN, ShapeParamsNorm.Z_ROTATION_STD, ShapeParamsNorm.Z_ROTATION_INCLUDE, -2, 2, 0, 2, 1) },
+        { ShapeParams.X_ROTATION, new UIParamInfo("UI_XRotation", ShapeParamsNorm.X_ROTATION_MEAN, ShapeParamsNorm.X_ROTATION_STD, -2, 2, 0, 2) },
+        { ShapeParams.Y_ROTATION, new UIParamInfo("UI_YRotation", ShapeParamsNorm.Y_ROTATION_MEAN, ShapeParamsNorm.Y_ROTATION_STD, -2, 2, 0, 2) },
+        { ShapeParams.Z_ROTATION, new UIParamInfo("UI_ZRotation", ShapeParamsNorm.Z_ROTATION_MEAN, ShapeParamsNorm.Z_ROTATION_STD, -2, 2, 0, 2) },
 
-        { ShapeParams.X_INIT_ROTATION, new UIParamInfo("UI_XInitRotation", ShapeParamsNorm.X_INIT_ROTATION_MEAN, ShapeParamsNorm.X_INIT_ROTATION_STD, ShapeParamsNorm.X_INIT_ROTATION_INCLUDE, -180, 180, 0, 180, 0) },
-        { ShapeParams.Y_INIT_ROTATION, new UIParamInfo("UI_YInitRotation", ShapeParamsNorm.Y_INIT_ROTATION_MEAN, ShapeParamsNorm.Y_INIT_ROTATION_STD, ShapeParamsNorm.Y_INIT_ROTATION_INCLUDE, -180, 180, 0, 180, 0) },
-        { ShapeParams.Z_INIT_ROTATION, new UIParamInfo("UI_ZInitRotation", ShapeParamsNorm.Z_INIT_ROTATION_MEAN, ShapeParamsNorm.Z_INIT_ROTATION_STD, ShapeParamsNorm.Z_INIT_ROTATION_INCLUDE, -180, 180, 0, 180, 0) },
+        { ShapeParams.X_INIT_ROTATION, new UIParamInfo("UI_XInitRotation", ShapeParamsNorm.X_INIT_ROTATION_MEAN, ShapeParamsNorm.X_INIT_ROTATION_STD, -180, 180, 0, 180) },
+        { ShapeParams.Y_INIT_ROTATION, new UIParamInfo("UI_YInitRotation", ShapeParamsNorm.Y_INIT_ROTATION_MEAN, ShapeParamsNorm.Y_INIT_ROTATION_STD, -180, 180, 0, 180) },
+        { ShapeParams.Z_INIT_ROTATION, new UIParamInfo("UI_ZInitRotation", ShapeParamsNorm.Z_INIT_ROTATION_MEAN, ShapeParamsNorm.Z_INIT_ROTATION_STD, -180, 180, 0, 180) },
 
-        { ShapeParams.X_TRANSLATION, new UIParamInfo("UI_XTranslation", ShapeParamsNorm.X_TRANSLATION_MEAN, ShapeParamsNorm.X_TRANSLATION_STD, ShapeParamsNorm.X_TRANSLATION_INCLUDE, -2, 2, 0, 2, 1) },
-        { ShapeParams.Y_TRANSLATION, new UIParamInfo("UI_YTranslation", ShapeParamsNorm.Y_TRANSLATION_MEAN, ShapeParamsNorm.Y_TRANSLATION_STD, ShapeParamsNorm.Y_TRANSLATION_INCLUDE, -2, 2, 0, 2, 1) },
-        { ShapeParams.Z_TRANSLATION, new UIParamInfo("UI_ZTranslation", ShapeParamsNorm.Z_TRANSLATION_MEAN, ShapeParamsNorm.Z_TRANSLATION_STD, ShapeParamsNorm.Z_TRANSLATION_INCLUDE, -2, 2, 0, 2, 1) },
+        { ShapeParams.X_TRANSLATION, new UIParamInfo("UI_XTranslation", ShapeParamsNorm.X_TRANSLATION_MEAN, ShapeParamsNorm.X_TRANSLATION_STD, -2, 2, 0, 2) },
+        { ShapeParams.Y_TRANSLATION, new UIParamInfo("UI_YTranslation", ShapeParamsNorm.Y_TRANSLATION_MEAN, ShapeParamsNorm.Y_TRANSLATION_STD, -2, 2, 0, 2) },
+        { ShapeParams.Z_TRANSLATION, new UIParamInfo("UI_ZTranslation", ShapeParamsNorm.Z_TRANSLATION_MEAN, ShapeParamsNorm.Z_TRANSLATION_STD, -2, 2, 0, 2) },
 
-        { ShapeParams.X_INIT_POSITION, new UIParamInfo("UI_XInitPosition", ShapeParamsNorm.X_INIT_POSITION_MEAN, ShapeParamsNorm.X_INIT_POSITION_STD, ShapeParamsNorm.X_INIT_POSITION_INCLUDE, 0, 1, 0, 0.15f, 0) },
-        { ShapeParams.Y_INIT_POSITION, new UIParamInfo("UI_YInitPosition", ShapeParamsNorm.Y_INIT_POSITION_MEAN, ShapeParamsNorm.Y_INIT_POSITION_STD, ShapeParamsNorm.Y_INIT_POSITION_INCLUDE, 0, 1, 0, 0.15f, 0) },
-        { ShapeParams.Z_INIT_POSITION, new UIParamInfo("UI_ZInitPosition", ShapeParamsNorm.Z_INIT_POSITION_MEAN, ShapeParamsNorm.Z_INIT_POSITION_STD, ShapeParamsNorm.Z_INIT_POSITION_INCLUDE, 0, 1, 0, 0.15f, 0) },
+        { ShapeParams.X_INIT_POSITION, new UIParamInfo("UI_XInitPosition", ShapeParamsNorm.X_INIT_POSITION_MEAN, ShapeParamsNorm.X_INIT_POSITION_STD, 0, 1, 0, 0.15f) },
+        { ShapeParams.Y_INIT_POSITION, new UIParamInfo("UI_YInitPosition", ShapeParamsNorm.Y_INIT_POSITION_MEAN, ShapeParamsNorm.Y_INIT_POSITION_STD, 0, 1, 0, 0.15f) },
+        { ShapeParams.Z_INIT_POSITION, new UIParamInfo("UI_ZInitPosition", ShapeParamsNorm.Z_INIT_POSITION_MEAN, ShapeParamsNorm.Z_INIT_POSITION_STD, 0, 1, 0, 0.15f) },
 
-        { ShapeParams.X_SCALE, new UIParamInfo("UI_XScale", ShapeParamsNorm.X_SCALE_MEAN, ShapeParamsNorm.X_SCALE_STD, ShapeParamsNorm.X_SCALE_INCLUDE, 0.25f, 2, 0, 2, 1) },
-        { ShapeParams.Y_SCALE, new UIParamInfo("UI_YScale", ShapeParamsNorm.Y_SCALE_MEAN, ShapeParamsNorm.Y_SCALE_STD, ShapeParamsNorm.Y_SCALE_INCLUDE, 0.25f, 2, 0, 2, 1) },
-        { ShapeParams.Z_SCALE, new UIParamInfo("UI_ZScale", ShapeParamsNorm.Z_SCALE_MEAN, ShapeParamsNorm.Z_SCALE_STD, ShapeParamsNorm.Z_SCALE_INCLUDE, 0.25f, 2, 0, 2, 1) },
+        { ShapeParams.X_SCALE, new UIParamInfo("UI_XScale", ShapeParamsNorm.X_SCALE_MEAN, ShapeParamsNorm.X_SCALE_STD, 0.25f, 2, 0, 2) },
+        { ShapeParams.Y_SCALE, new UIParamInfo("UI_YScale", ShapeParamsNorm.Y_SCALE_MEAN, ShapeParamsNorm.Y_SCALE_STD, 0.25f, 2, 0, 2) },
+        { ShapeParams.Z_SCALE, new UIParamInfo("UI_ZScale", ShapeParamsNorm.Z_SCALE_MEAN, ShapeParamsNorm.Z_SCALE_STD, 0.25f, 2, 0, 2) },
 
-        { ShapeParams.SURFACE_NOISE, new UIParamInfo("UI_SurfaceNoise", ShapeParamsNorm.SURFACE_NOISE_MEAN, ShapeParamsNorm.SURFACE_NOISE_STD, ShapeParamsNorm.SURFACE_NOISE_INCLUDE, 0, 1, 0, 1, 1) },
+        { ShapeParams.SURFACE_NOISE, new UIParamInfo("UI_SurfaceNoise", ShapeParamsNorm.SURFACE_NOISE_MEAN, ShapeParamsNorm.SURFACE_NOISE_STD, 0, 1, 0, 1) },
     };
 
     void Update()
@@ -132,11 +132,9 @@ public class UI_ObjectParams : MonoBehaviour
 
             ShapeParamsNorm meanParam = info.meanParam;
             ShapeParamsNorm stdParam = info.stdParam;
-            ShapeParamsNorm includeParam = info.includeParam;
 
             float meanValue = sceneController.shapeParamDataBuffer[(int)shapeID].GetValue(meanParam);
             float stdValue = sceneController.shapeParamDataBuffer[(int)shapeID].GetValue(stdParam);
-            bool includeValue = sceneController.shapeParamDataBuffer[(int)shapeID].GetValue(includeParam) > 0;
 
             Transform fields = controls.transform.Find(info.groupName);
 
@@ -158,12 +156,8 @@ public class UI_ObjectParams : MonoBehaviour
             stdSlider.value = stdValue;
             SetSliderColor(stdSlider);
 
-            Toggle includeTgl = fields.Find("Tgl_Include")?.GetComponent<Toggle>();
-            includeTgl.onValueChanged.AddListener(includeValue => WriteParamValue(includeValue ? 1f : 0f, includeParam));
-            includeTgl.isOn = includeValue;
-
             Button defaultBtn = fields.Find("Btn_Def")?.GetComponent<Button>();
-            defaultBtn.onClick.AddListener(() => SetParameterToDefault(param, meanSlider, stdSlider, includeTgl));
+            defaultBtn.onClick.AddListener(() => SetParameterToDefault(param, meanSlider, stdSlider));
             SetButtonColor(defaultBtn);
 
             Button randBtn = fields.Find("Btn_Rnd")?.GetComponent<Button>();
@@ -195,9 +189,8 @@ public class UI_ObjectParams : MonoBehaviour
             Transform fields = controls.transform.Find(info.groupName);
             Slider meanSlider = fields.Find("Sld_Mean")?.GetComponent<Slider>();
             Slider stdSlider = fields.Find("Sld_Std")?.GetComponent<Slider>();
-            Toggle includeTgl = fields.Find("Tgl_Include")?.GetComponent<Toggle>();
 
-            SetParameterToDefault(param, meanSlider, stdSlider, includeTgl);
+            SetParameterToDefault(param, meanSlider, stdSlider);
         }
     }
 
@@ -217,37 +210,32 @@ public class UI_ObjectParams : MonoBehaviour
         }
     }
 
-    void SetParameterToDefault(ShapeParams param, Slider meanSld, Slider stdSld, Toggle includeTgl)
+    void SetParameterToDefault(ShapeParams param, Slider meanSld, Slider stdSld)
     {
         if (!shapeParamUIMap.TryGetValue(param, out UIParamInfo info))
             return;
 
         ShapeParamsNorm meanParam = info.meanParam;
         ShapeParamsNorm stdParam = info.stdParam;
-        ShapeParamsNorm includeParam = info.includeParam;
 
-        float mean, std, include;
+        float mean, std;
 
         if (shapeID == ShapeParamLabels.GLOBAL)
         {
             mean = ShapeParamData.GetGlobalDefaultValue(meanParam);
             std = ShapeParamData.GetGlobalDefaultValue(stdParam);
-            include = ShapeParamData.GetGlobalDefaultValue(includeParam);
         }
         else
         {
             mean = ShapeParamData.GetDefaultValue(meanParam);
             std = ShapeParamData.GetDefaultValue(stdParam);
-            include = ShapeParamData.GetDefaultValue(includeParam);
         }
 
         WriteParamValue(mean, meanParam);
         WriteParamValue(std, stdParam);
-        WriteParamValue(include, includeParam);
 
         meanSld.value = mean;
         stdSld.value = std;
-        includeTgl.isOn = include > 0;
     }
 
     void SetParameterToRandom(ShapeParams param, Slider meanSld, Slider stdSld)
@@ -292,22 +280,18 @@ public class UI_ObjectParams : MonoBehaviour
 
             ShapeParamsNorm meanParam = info.meanParam;
             ShapeParamsNorm stdParam = info.stdParam;
-            ShapeParamsNorm includeParam = info.includeParam;
 
-            float mean, std, include;
+            float mean, std;
 
             mean = ReadParamValue(meanParam);
             std = ReadParamValue(stdParam);
-            include = ReadParamValue(includeParam);
 
             Transform fields = controls.transform.Find(info.groupName);
             Slider meanSlider = fields.Find("Sld_Mean")?.GetComponent<Slider>();
             Slider stdSlider = fields.Find("Sld_Std")?.GetComponent<Slider>();
-            Toggle includeTgl = fields.Find("Tgl_Include")?.GetComponent<Toggle>();
 
             meanSlider.value = mean;
             stdSlider.value = std;
-            includeTgl.isOn = include > 0;
         }
     }
 
