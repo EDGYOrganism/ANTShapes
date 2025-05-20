@@ -84,6 +84,7 @@ public class SceneController : MonoBehaviour
 
     [Header("Simulation Settings")]
     public TMP_InputField durationInput;
+    public TMP_InputField startTimeInput;
     public TMP_InputField timeScaleInput;
     public TMP_InputField textureWidthInput;
     public TMP_InputField textureHeightInput;
@@ -95,7 +96,7 @@ public class SceneController : MonoBehaviour
     private int frame = 0;
     private int numFrames;
     private int textureWidth, textureHeight, pixelCount;
-    private float duration, spikeThreshold;
+    private float duration, startTime, spikeThreshold;
     [HideInInspector] public float timeScale;
     private int timestamp;
     private float elapsedTime;
@@ -236,6 +237,7 @@ public class SceneController : MonoBehaviour
         Utils.SetupTextInputFormatting(seedInput, "", 8, -9999999, 9999999);
         Utils.SetupTextInputFormatting(timeScaleInput, "", 5, 0.001f, 100);
         Utils.SetupTextInputFormatting(durationInput, "", 6, 1, 999999);
+        Utils.SetupTextInputFormattingForStartTime(startTimeInput, "", 6, this);
         Utils.SetupTextInputFormatting(textureWidthInput, "", 4, 32, 4096);
         Utils.SetupTextInputFormatting(textureHeightInput, "", 4, 32, 4096);
         Utils.SetupTextInputFormatting(spikeThresholdInput, "", 6, 0, 0.5f);
@@ -325,6 +327,8 @@ public class SceneController : MonoBehaviour
 
     void StartExport()
     {
+        BtnCloseAllEditMenus();
+
         ExtensionFilter[] extensions = new[] {
             new ExtensionFilter("ANTShapes", "")
         };
@@ -438,6 +442,12 @@ public class SceneController : MonoBehaviour
         else
         {
             applyButton.interactable = changesMade;
+        }
+
+        while (startTime > frame * timeScale)
+        {
+            UpdateAllObjects();
+            frame++;
         }
 
         skyboxCamera.Render();
@@ -647,7 +657,8 @@ public class SceneController : MonoBehaviour
     void TimeDefaults()
     {
         timeScaleInput.text = "1";
-        durationInput.text = "100";
+        durationInput.text = "500";
+        startTimeInput.text = "0";
     }
 
     void CameraDefaults()
@@ -835,6 +846,9 @@ public class SceneController : MonoBehaviour
         AdjustRenderQuads();
         SetRenderQuadTextures(previousMode); // Restore previous texture mode
         changesMade = false;
+
+        if (startTime - timeScale > duration)
+            startTime = duration - timeScale;
     }
 
     void UpdateSkybox()
@@ -1322,6 +1336,7 @@ public class SceneController : MonoBehaviour
         int.TryParse(minNumObjectsInput.text, out minNumObjects);
         int.TryParse(maxNumObjectsInput.text, out maxNumObjects);
         float.TryParse(durationInput.text, out duration);
+        float.TryParse(startTimeInput.text, out startTime);
         float.TryParse(timeScaleInput.text, out timeScale);
         float.TryParse(fovInput.text, out fov);
         float.TryParse(sceneDepthInput.text, out sceneDepth);

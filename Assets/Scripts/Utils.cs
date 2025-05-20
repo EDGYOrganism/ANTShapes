@@ -102,6 +102,25 @@ public static class Utils
         inputField.onEndEdit.AddListener(OnInputChanged);
     }
 
+    public static void SetupTextInputFormattingForStartTime(TMP_InputField inputField, string format, int charLimit, SceneController sceneController)
+    {
+        inputField.characterLimit = charLimit;
+
+        void OnInputChanged(string text)
+        {
+            if (float.TryParse(text, out float value))
+            {
+                float.TryParse(sceneController.durationInput.text, out float limit);
+                float.TryParse(sceneController.timeScaleInput.text, out float timeScale);
+                limit -= timeScale;
+                value = Mathf.Clamp(value, 0, limit);
+                inputField.text = value.ToString(format);
+            }
+        }
+
+        inputField.onEndEdit.AddListener(OnInputChanged);
+    }
+
     public static Texture2D RenderTextureToTexture2D(RenderTexture rt)
     {
         Texture2D tex = new Texture2D(rt.width, rt.height, TextureFormat.RGB24, false);
