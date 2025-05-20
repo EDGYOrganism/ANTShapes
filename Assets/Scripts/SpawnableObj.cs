@@ -567,70 +567,131 @@ public class SpawnableObj : MonoBehaviour
         return ret;
     }
 
-    private void EvaluateComponent(ref float d2, ref int k, float value, float stdCondition, float dataCondition)
+    public void Evaluate1DPValue(ref float d2, ref int k, ShapeParams param)
     {
-        if (dataCondition > 0 && stdCondition > 0)
+        ShapeParamsNorm[] normParams = Utils.ShapeParamToShapeParamNorm(param);
+
+        // Local shape parameter
+        if (ReadShapeParam(normParams[2]) > 0 && ReadShapeParam(normParams[1]) > 0)
         {
-            d2 += value * value; // Normalized: std = 1
+            float value = thisShapeParamValuesRaw[(int)param];
+            d2 += value * value; // std = 1 → value² / 1²
+            k += 1;
+        }
+
+        // Global parameter
+        if (ReadGlobalShapeParam(normParams[2]) > 0 && ReadGlobalShapeParam(normParams[1]) > 0)
+        {
+            float value = globalShapeParamValuesRaw[(int)param];
+            d2 += value * value; // std = 1
             k += 1;
         }
     }
 
-    public void Evaluate1DPValue(ref float d2, ref int k, ShapeParams param)
+    public void Evaluate3DPValue(ref float d2, ref int k, ShapeParams paramX, ShapeParams paramY, ShapeParams paramZ)
     {
-        var normParams = Utils.ShapeParamToShapeParamNorm(param);
+        // Helper function: no std needed now
+        float AddComponent(float value) => value * value;
+        float std = 0;
+        float d2x, d2y, d2z;
+        float n = 0;
 
-        EvaluateComponent(ref d2, ref k, thisShapeParamValuesRaw[(int)param],
-                        ReadShapeParam(normParams[1]), ReadShapeParam(normParams[2]));
+        // X
+        d2x = 0;
+        if (ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramX)[2]) > 0 && ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramX)[1]) > 0)
+        {
+            std += ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramX)[1]);
+            d2x += thisShapeParamValuesRaw[(int)paramX];
+            n++;
+        }
+        if (ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramX)[2]) > 0 && ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramX)[1]) > 0)
+        {
+            std += ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramX)[1]);
+            d2x += globalShapeParamValuesRaw[(int)paramX];
+            n++;
+        }
+        if (std > 0)
+        {
+            d2 += AddComponent(d2x / n);
+            k += 1;
+        }
 
-        EvaluateComponent(ref d2, ref k, globalShapeParamValuesRaw[(int)param],
-                        ReadGlobalShapeParam(normParams[1]), ReadGlobalShapeParam(normParams[2]));
+        // Y
+        std = 0;
+        d2y = 0;
+        n = 0;
+        if (ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramY)[2]) > 0 && ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramY)[1]) > 0)
+        {
+            std += ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramY)[1]);
+            d2y += thisShapeParamValuesRaw[(int)paramY];
+            n++;
+        }
+        if (ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramY)[2]) > 0 && ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramY)[1]) > 0)
+        {
+            std += ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramY)[1]);
+            d2y += globalShapeParamValuesRaw[(int)paramY];
+            n++;
+        }
+        if (std > 0)
+        {
+            d2 += AddComponent(d2y / n);
+            k += 1;
+        }
+
+        // Z
+        std = 0;
+        d2z = 0;
+        n = 0;
+        if (ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramZ)[2]) > 0 && ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramZ)[1]) > 0)
+        {
+            std += ReadShapeParam(Utils.ShapeParamToShapeParamNorm(paramZ)[1]);
+            d2z += thisShapeParamValuesRaw[(int)paramZ];
+            n++;
+        }
+        if (ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramZ)[2]) > 0 && ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramZ)[1]) > 0)
+        {
+            std += ReadGlobalShapeParam(Utils.ShapeParamToShapeParamNorm(paramZ)[1]);
+            d2z += globalShapeParamValuesRaw[(int)paramZ];
+            n++;
+        }
+        if (std > 0)
+        {
+            d2 += AddComponent(d2z / n);
+            k += 1;
+        }
     }
 
-    public void Evaluate3DPValue(ref float d2, ref int k,
-                                ShapeParams paramX, ShapeParams paramY, ShapeParams paramZ)
-    {
-        Evaluate3DComponent(ref d2, ref k, paramX);
-        Evaluate3DComponent(ref d2, ref k, paramY);
-        Evaluate3DComponent(ref d2, ref k, paramZ);
-    }
-
-    private void Evaluate3DComponent(ref float d2, ref int k, ShapeParams param)
-    {
-        var normParams = Utils.ShapeParamToShapeParamNorm(param);
-        int index = (int)param;
-
-        EvaluateComponent(ref d2, ref k, thisShapeParamValuesRaw[index],
-                        ReadShapeParam(normParams[1]), ReadShapeParam(normParams[2]));
-
-        EvaluateComponent(ref d2, ref k, globalShapeParamValuesRaw[index],
-                        ReadGlobalShapeParam(normParams[1]), ReadGlobalShapeParam(normParams[2]));
-    }
-
-    private float EvaluateAllPValues()
+    float EvaluateAllPValues()
     {
         float d2 = 0;
         int k = 0;
 
         for (int i = 0; i < (int)ShapeParams.COUNT;)
         {
-            ShapeParams param = (ShapeParams)i;
+            ShapeParams paramX = (ShapeParams)i;
 
-            if (param == ShapeParams.SURFACE_NOISE)
+            if (paramX == ShapeParams.SURFACE_NOISE)
             {
-                Evaluate1DPValue(ref d2, ref k, param);
+                Evaluate1DPValue(ref d2, ref k, paramX);
                 i++;
             }
             else
             {
-                Evaluate3DPValue(ref d2, ref k,
-                    (ShapeParams)(i), (ShapeParams)(i + 1), (ShapeParams)(i + 2));
+                ShapeParams paramY = (ShapeParams)i + 1;
+                ShapeParams paramZ = (ShapeParams)i + 2;
+
+                Evaluate3DPValue(ref d2, ref k, paramX, paramY, paramZ);
                 i += 3;
             }
         }
 
-        float overallPValue = 1f - NormalRandom.ChiSquaredCDF(d2, k);
-        return overallPValue > 0f ? overallPValue : 1f;
+        float overallPValue = 1 - NormalRandom.ChiSquaredCDF(d2, k);
+
+        // Clamp to avoid edge case
+        if (overallPValue <= 0)
+            overallPValue = 1;
+
+        return overallPValue;
     }
 
     public float EvaluateOverallPValue()

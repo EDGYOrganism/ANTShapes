@@ -39,9 +39,9 @@ public class UI_ObjectParams : MonoBehaviour
         { ShapeParams.Y_TRANSLATION, new UIParamInfo("UI_YTranslation", ShapeParamsNorm.Y_TRANSLATION_MEAN, ShapeParamsNorm.Y_TRANSLATION_STD, ShapeParamsNorm.Y_TRANSLATION_INCLUDE, -2, 2, 0, 2, 1) },
         { ShapeParams.Z_TRANSLATION, new UIParamInfo("UI_ZTranslation", ShapeParamsNorm.Z_TRANSLATION_MEAN, ShapeParamsNorm.Z_TRANSLATION_STD, ShapeParamsNorm.Z_TRANSLATION_INCLUDE, -2, 2, 0, 2, 1) },
 
-        { ShapeParams.X_INIT_POSITION, new UIParamInfo("UI_XInitPosition", ShapeParamsNorm.X_INIT_POSITION_MEAN, ShapeParamsNorm.X_INIT_POSITION_STD, ShapeParamsNorm.X_INIT_POSITION_INCLUDE, 0, 1, 0, 0.25f, 0) },
-        { ShapeParams.Y_INIT_POSITION, new UIParamInfo("UI_YInitPosition", ShapeParamsNorm.Y_INIT_POSITION_MEAN, ShapeParamsNorm.Y_INIT_POSITION_STD, ShapeParamsNorm.Y_INIT_POSITION_INCLUDE, 0, 1, 0, 0.25f, 0) },
-        { ShapeParams.Z_INIT_POSITION, new UIParamInfo("UI_ZInitPosition", ShapeParamsNorm.Z_INIT_POSITION_MEAN, ShapeParamsNorm.Z_INIT_POSITION_STD, ShapeParamsNorm.Z_INIT_POSITION_INCLUDE, 0, 1, 0, 0.25f, 0) },
+        { ShapeParams.X_INIT_POSITION, new UIParamInfo("UI_XInitPosition", ShapeParamsNorm.X_INIT_POSITION_MEAN, ShapeParamsNorm.X_INIT_POSITION_STD, ShapeParamsNorm.X_INIT_POSITION_INCLUDE, 0, 1, 0, 0.15f, 0) },
+        { ShapeParams.Y_INIT_POSITION, new UIParamInfo("UI_YInitPosition", ShapeParamsNorm.Y_INIT_POSITION_MEAN, ShapeParamsNorm.Y_INIT_POSITION_STD, ShapeParamsNorm.Y_INIT_POSITION_INCLUDE, 0, 1, 0, 0.15f, 0) },
+        { ShapeParams.Z_INIT_POSITION, new UIParamInfo("UI_ZInitPosition", ShapeParamsNorm.Z_INIT_POSITION_MEAN, ShapeParamsNorm.Z_INIT_POSITION_STD, ShapeParamsNorm.Z_INIT_POSITION_INCLUDE, 0, 1, 0, 0.15f, 0) },
 
         { ShapeParams.X_SCALE, new UIParamInfo("UI_XScale", ShapeParamsNorm.X_SCALE_MEAN, ShapeParamsNorm.X_SCALE_STD, ShapeParamsNorm.X_SCALE_INCLUDE, 0.25f, 2, 0, 2, 1) },
         { ShapeParams.Y_SCALE, new UIParamInfo("UI_YScale", ShapeParamsNorm.Y_SCALE_MEAN, ShapeParamsNorm.Y_SCALE_STD, ShapeParamsNorm.Y_SCALE_INCLUDE, 0.25f, 2, 0, 2, 1) },
