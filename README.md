@@ -30,9 +30,41 @@ We aim to develop an anomalous event simulator that is:
 
 - **Deterministic:**  Simulations are repeatable and stable, regardless of the frame rate of the app and scene complexity.
 
+# Objects and Behaviours
+
+ANTShapes features 12 object classes:
+
+- **Simple flat-faced geometries**:  Cuboids, icospheroids, pyramids, T-block and L-block "Tetris"-style objects
+
+- **Simple smooth-faced geometries**:  Spheroids, cones, toruses, cylinders, capsules
+
+- **Complex reference models**:  Utah teapot, Suzanne monkey head
+
+Up to 1024 objects can be spawned in the scene.  Each object can exhibit the following behaviours:
+
+- **Rotation speed**:  rotation around X, Y and/or Z axes
+
+- **Translation speed**:  translation along X, Y and/or Z axes
+ 
+- **Scale**:  object scale along X, Y and/or Z axes
+ 
+- **Initial rotation**:  initial rotation around X, Y and/or Z axes
+ 
+- **Initial position**:  spawn position on the X, Y and/or Z axes
+
+- **Surface noise**:  the amount of normal-mapping applied to the surfaces of objects; increasing this parameter makes objects appear "rougher"
+
+Each of these behaviours can be included or ignored from anomaly calculations according to the needs of the user.
+
+# Anomaly Definition Model
+
+Anomalies in the ANTShapes simulation are highlighted in red.  Objects that are non-anomalous appear blue (more common) to green (less common).
+
+
+
 # Paper
 
-A pre-print publication discussing the anomaly definition system behind ANTShapes is available here: _coming soon lol_
+A pre-print publication discussing the anomaly definition system behind ANTShapes in further detail available here: _coming soon lol_
 
 # Example Datasets
 
@@ -50,4 +82,4 @@ Edgy Organism @EDGYOrganism - testing & feedback
 
 For general inquiries - michael.middleton@york.ac.uk
 
-**Please report bugs on GitHub!**
+**Please report bugs via the issues tab on the project GitHub!**
