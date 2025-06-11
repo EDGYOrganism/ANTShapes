@@ -2,11 +2,11 @@
 
 _This project is currently in an open alpha state of development.  There are some missing and incomplete features for CPU-based rendering, and optimisation is needed.  Please feel free to try the software anyway and suggest features :)_
 
-_Example datasets ~~are~~ will be available if you'd rather not download the executable._
+_Prefer not to download an executable?  Check out our example datasets, or the web demo! (Requires Unity player.)_
 
 ANTShapes is a neuromorphic vision dataset simulator for anomaly detection.  It simulates scenes populated by 3D objects and renders event data in a similar manner to real-life Dynamic Vision Sensors (DVSs).
 
-The tool was designed to address the lack of high-quality fully-labelled datasets for the training of Spiking Neural Networks (SNNs) for anomaly detection in computer vision.
+The tool was designed to address the lack of high-quality fully-labelled datasets for the training of Spiking Neural Networks (SNNs) for anomaly detection in computer vision as part of the [EDGY Organism](https://iotgarage.net/projects/EdgyOrganism.html) project.
 
 Typically, a conventional video anomaly dataset (e.g. Shanghai Tech, Alleyway) would be converted into a spike-based representation by comparing the pixel intensity between high-speed interpolated frames or by pointing a DVS at a screen displaying the video footage.
 
@@ -40,7 +40,7 @@ ANTShapes features 12 object classes:
 
 - **Complex reference models**:  Utah teapot, Suzanne monkey head
 
-Up to 1024 objects can be spawned in the scene.  Each object can exhibit the following behaviours:
+Up to 1024 objects can be spawned in the scene.  Each object can exhibit the following properties:
 
 - **Rotation speed**:  rotation around X, Y and/or Z axes
 
@@ -60,23 +60,31 @@ Each of these behaviours can be included or ignored from anomaly calculations ac
 
 Anomalies in the ANTShapes simulation are highlighted in red.  Objects that are non-anomalous appear blue (more common) to green (less common).
 
+The properties listed above are defined per-object from zero-mean normal distributions, where standard deviation is between \[0, 1\].  Users define the mean and standard distribution values for each behaviour.  When the standard deviation = 0, the mean value acts as a constant value which is assigned to the property.
 
+When an object is created, samples are taken from the normal distributions associated with each property.
 
-# Paper
+The overall P-value is obtained by evaluating the cumulative distribution function over all behaviours included for anomaly definitions:
 
-A pre-print publication discussing the anomaly definition system behind ANTShapes in further detail available here: _coming soon lol_
+A pre-print publication discussing the anomaly definition model behind ANTShapes in further detail is available here: _coming soon lol_
 
-# Example Datasets
+# Tutorials, Usage, Documentation...
 
-Also coming soon...
+Please see the [project wiki](https://github.com/EDGYOrganism/ANTShapes/wiki).
+
+# Builds
+
+Compiled builds are available for Linux and Windows - please see the [releases page](https://github.com/EDGYOrganism/ANTShapes/releases).
+
+No builds are planned for OSX unless demand is high enough!
 
 # Credits
 
-Mike Middleton @itskobold - app development
+Mike Middleton [@itskobold](https://github.com/itskobold) - app development
 
-Edgy Organism @EDGYOrganism - testing & feedback
+EDGY Organism [@EDGYOrganism](https://github.com/EDGYOrganism) - master project, testing & feedback
 
-@hamsturcio - High-poly Utah teapot-style 3D model (https://free3d.com/3d-model/teapot-15884.html)
+[@hamsturcio](https://free3d.com/3d-model/teapot-15884.html) - High-poly Utah teapot-style 3D model
 
 # Contact
 
