@@ -192,10 +192,14 @@ public class SceneController : MonoBehaviour
         Application.targetFrameRate = 60;
         Input.simulateMouseWithTouches = true; // For touch devices
 
+        #if !UNITY_WEBGL
+
         kernelHandleCreateFrame = createFrame.FindKernel("CSMain");
         kernelHandleDiff = frameDiff.FindKernel("CSMain");
         kernelHandleAnom = anomalyMask.FindKernel("CSMain");
         kernelHandlePrepareData = packEventBits.FindKernel("CSMain");
+
+        #endif
 
         reboundOnEdges = new bool[6];
 
@@ -458,6 +462,8 @@ public class SceneController : MonoBehaviour
 
         UpdateAllObjects();
 
+        #if !UNITY_WEBGL
+
         if (useGPU)
         {
             DispatchCreateFrameComputeShader();
@@ -469,8 +475,18 @@ public class SceneController : MonoBehaviour
             FrameDifferenceCPU.ComputeFrameDifference(frameTexture, lastFrameTexture, differenceTexture, spikeThreshold);
             AnomalyMaskCPU.CreateAnomalyMask(anomalyTexture, lastAnomalyTexture, anomalyMaskTexture);
         }
+
+        #else
+
+        FrameDifferenceCPU.ComputeFrameDifference(frameTexture, lastFrameTexture, differenceTexture, spikeThreshold);
+        AnomalyMaskCPU.CreateAnomalyMask(anomalyTexture, lastAnomalyTexture, anomalyMaskTexture);
+
+        #endif
+
         Graphics.Blit(frameTexture, lastFrameTexture);
         Graphics.Blit(anomalyTexture, lastAnomalyTexture);
+
+        #if !UNITY_WEBGL
 
         if (isExporting)
         {
@@ -482,6 +498,8 @@ public class SceneController : MonoBehaviour
             if (includeSpikesViewToggle.isOn)
                 ExportPNG(differenceTexture, $"{rootFolder}/{seed}/view_spikes/{frame}.png");
         }
+
+        #endif
 
         frame++;
     }
